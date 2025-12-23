@@ -1,0 +1,117 @@
+package types
+
+import (
+	"context"
+	"regexp"
+	"strconv"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// Validate performs validation checks on the HL7AEcg instance.
+func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	e.ID.Validate(ctx, vctx)
+
+	if e.Code.Code == "" {
+		vctx.AddError(ErrMissingCode)
+	}
+	if e.Code.CodeSystem == "" {
+		vctx.AddError(ErrMissingCodeSystem)
+	}
+
+	if e.EffectiveTime == nil {
+		vctx.AddError(ErrMissingEffectiveTime)
+	} else {
+		e.EffectiveTime.Validate(ctx, vctx)
+	}
+
+	if e.ConfidentialityCode != nil {
+		e.ConfidentialityCode.ValidateCode(ctx, vctx, "ConfidentialityCode")
+	}
+	if e.ReasonCode != nil {
+		e.ReasonCode.ValidateCode(ctx, vctx, "ReasonCode")
+	}
+	// if e.ClinicalTrial == nil {
+	// 	vctx.AddError(ErrMissingClinicalTrial)
+	// } else {
+	// 	e.ClinicalTrial.Validate(ctx, vctx)
+	// }
+	if e.Subject != nil {
+		e.Subject.Validate(ctx, vctx)
+	} else {
+		vctx.AddError(ErrMissingSubject)
+	}
+
+	return nil
+}
+
+func (id *ID) Validate(ctx context.Context, vctx *ValidationContext) error {
+	if id.Root == "" {
+		vctx.AddError(ErrMissingID)
+		return nil
+	}
+	if _, err := uuid.Parse(id.Root); err == nil {
+		return nil
+	}
+	if valid, _ := regexp.MatchString(`^[0-9.]+$`, id.Root); valid {
+		return nil
+	}
+	vctx.AddError(ErrInvalidID)
+	return nil
+}
+
+func (e *EffectiveTime) Validate(ctx context.Context, vctx *ValidationContext) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	if e.Low.Value == "" && e.High.Value == "" {
+		vctx.AddError(ErrInvalidEffectiveTime)
+	} else if e.Low.Value != "" && !isValidTimestamp(e.Low.Value) {
+		vctx.AddError(ErrInvalidTimeFormat)
+	} else if e.High.Value != "" && !isValidTimestamp(e.High.Value) {
+		vctx.AddError(ErrInvalidTimeFormat)
+	}
+	return nil
+}
+
+// isValidTimestamp checks if the string is a valid HL7 TS or Unix timestamp.
+func isValidTimestamp(s string) bool {
+	// Try HL7 TS format (YYYYMMDDHHmmss or with milliseconds)
+	layouts := []string{
+		"20060102150405",     // YYYYMMDDHHmmss
+		"20060102150405.000", // with milliseconds
+		"20060102",           // date only
+		"200601",             // year + month
+		"2006",               // year only
+	}
+
+	for _, layout := range layouts {
+		if _, err := time.Parse(layout, s); err == nil {
+			return true
+		}
+	}
+
+	// Try Unix timestamp
+	if sec, err := strconv.ParseInt(s, 10, 64); err == nil {
+		t := time.Unix(sec, 0)
+		min := time.Unix(0, 0)
+		max := time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC)
+		return t.After(min) && t.Before(max)
+	}
+
+	return false
+}
+
+func (ct *ClinicalTrial) Validate(ctx context.Context, vctx *ValidationContext) error {
+	ct.ID.Validate(ctx, vctx)
+	return nil
+}
