@@ -23,7 +23,9 @@ func (h *Hl7xml) SetSubject(id, extension string, code types.CodeRole) *Hl7xml {
 				ComponentOf: types.ComponentOfSubjectAssignment{
 					SubjectAssignment: types.SubjectAssignment{
 						Subject: types.Subject{
-							TrialSubject: types.TrialSubject{},
+							TrialSubject: types.TrialSubject{
+								SubjectDemographicPerson: &types.SubjectDemographicPerson{},
+							},
 						},
 						ComponentOf: types.ComponentOfClinicalTrial{
 							ClinicalTrial: types.ClinicalTrial{},
@@ -52,6 +54,7 @@ func (h *Hl7xml) SetSubject(id, extension string, code types.CodeRole) *Hl7xml {
 		}
 		trialSubject.Code.SetCode(code, types.HL7_ResearchSubjectRoleBasis_OID, "")
 	}
+	trialSubject.SubjectDemographicPerson.SetMedications().SetClinicalClassifications()
 
 	return h
 }

@@ -63,7 +63,7 @@ func (s *SubjectDemographicPerson) SetRace(raceCode RaceCode, codeSystem CodeSys
 //
 // Example: SetPatientID("25060897140")
 func (s *SubjectDemographicPerson) SetPatientID(patientID string) *SubjectDemographicPerson {
-	s.PatientID = &patientID
+	s.PatientID = patientID
 	return s
 }
 
@@ -74,7 +74,7 @@ func (s *SubjectDemographicPerson) SetPatientID(patientID string) *SubjectDemogr
 //
 // Example: SetSecondPatientID("ALT-123456")
 func (s *SubjectDemographicPerson) SetSecondPatientID(secondPatientID string) *SubjectDemographicPerson {
-	s.SecondPatientID = &secondPatientID
+	s.SecondPatientID = secondPatientID
 	return s
 }
 
@@ -84,7 +84,7 @@ func (s *SubjectDemographicPerson) SetSecondPatientID(secondPatientID string) *S
 //
 // Example: SetAge("65")
 func (s *SubjectDemographicPerson) SetAge(age string) *SubjectDemographicPerson {
-	s.Age = &age
+	s.Age = age
 	return s
 }
 
@@ -92,7 +92,7 @@ func (s *SubjectDemographicPerson) SetAge(age string) *SubjectDemographicPerson 
 //
 // Example: SetPaced(true)
 func (s *SubjectDemographicPerson) SetPaced(paced bool) *SubjectDemographicPerson {
-	s.Paced = &paced
+	s.Paced = paced
 	return s
 }
 
@@ -101,9 +101,14 @@ func (s *SubjectDemographicPerson) SetPaced(paced bool) *SubjectDemographicPerso
 // Each call adds one medication. Call multiple times to add multiple medications.
 //
 // Example:
-//   AddMedication("Aspirin 100mg").
-//   AddMedication("Metoprolol 50mg")
+//
+//	AddMedication("Aspirin 100mg").
+//	AddMedication("Metoprolol 50mg")
 func (s *SubjectDemographicPerson) AddMedication(medication string) *SubjectDemographicPerson {
+	// Remove empty default entry if present
+	if len(s.Medications.Medication) == 1 && s.Medications.Medication[0] == "" {
+		s.Medications.Medication = []string{}
+	}
 	s.Medications.Medication = append(s.Medications.Medication, medication)
 	return s
 }
@@ -117,6 +122,8 @@ func (s *SubjectDemographicPerson) SetMedications() *SubjectDemographicPerson {
 	s.Medications = Medications{
 		Medication: []string{},
 	}
+	// Add one empty entry by default
+	s.Medications.Medication = append(s.Medications.Medication, "")
 	return s
 }
 
@@ -125,9 +132,14 @@ func (s *SubjectDemographicPerson) SetMedications() *SubjectDemographicPerson {
 // Each call adds one classification. Call multiple times to add multiple classifications.
 //
 // Example:
-//   AddClinicalClassification("Hypertension").
-//   AddClinicalClassification("Diabetes Type 2")
+//
+//	AddClinicalClassification("Hypertension").
+//	AddClinicalClassification("Diabetes Type 2")
 func (s *SubjectDemographicPerson) AddClinicalClassification(classification string) *SubjectDemographicPerson {
+	// Remove empty default entry if present
+	if len(s.ClinicalClassifications.ClinicalClassification) == 1 && s.ClinicalClassifications.ClinicalClassification[0] == "" {
+		s.ClinicalClassifications.ClinicalClassification = []string{}
+	}
 	s.ClinicalClassifications.ClinicalClassification = append(s.ClinicalClassifications.ClinicalClassification, classification)
 	return s
 }
@@ -140,6 +152,24 @@ func (s *SubjectDemographicPerson) AddClinicalClassification(classification stri
 func (s *SubjectDemographicPerson) SetClinicalClassifications() *SubjectDemographicPerson {
 	s.ClinicalClassifications = ClinicalClassifications{
 		ClinicalClassification: []string{},
+	}
+	s.ClinicalClassifications.ClinicalClassification = append(s.ClinicalClassifications.ClinicalClassification, "")
+	return s
+}
+
+// SetEmptyClinicalClassifications initializes the classifications list with a specific number of empty entries.
+//
+// This is useful to match XML structures that require empty <ClinicalClassification/> elements.
+//
+// Example: SetEmptyClinicalClassifications(2) generates:
+//
+//	<ClinicalClassifications>
+//	  <ClinicalClassification/>
+//	  <ClinicalClassification/>
+//	</ClinicalClassifications>
+func (s *SubjectDemographicPerson) SetEmptyClinicalClassifications(count int) *SubjectDemographicPerson {
+	s.ClinicalClassifications = ClinicalClassifications{
+		ClinicalClassification: make([]string, count),
 	}
 	return s
 }

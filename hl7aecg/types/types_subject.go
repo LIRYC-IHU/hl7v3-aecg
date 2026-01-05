@@ -172,7 +172,7 @@ type SubjectDemographicPerson struct {
 	//
 	// XML Tag: <PatientID>...</PatientID>
 	// Cardinality: Optional
-	PatientID *string `xml:"PatientID"`
+	PatientID string `xml:"PatientID"`
 
 	// SecondPatientID is an optional secondary patient identifier.
 	//
@@ -181,7 +181,7 @@ type SubjectDemographicPerson struct {
 	//
 	// XML Tag: <SecondPatientID>...</SecondPatientID>
 	// Cardinality: Optional
-	SecondPatientID *string `xml:"SecondPatientID"`
+	SecondPatientID string `xml:"SecondPatientID"`
 
 	// Age is the subject's age at the time of ECG acquisition.
 	//
@@ -189,7 +189,7 @@ type SubjectDemographicPerson struct {
 	//
 	// XML Tag: <Age>...</Age>
 	// Cardinality: Optional
-	Age *string `xml:"Age"`
+	Age string `xml:"Age"`
 
 	// Paced indicates whether the patient has a cardiac pacemaker.
 	//
@@ -199,7 +199,7 @@ type SubjectDemographicPerson struct {
 	//
 	// XML Tag: <Paced>...</Paced>
 	// Cardinality: Optional
-	Paced *bool `xml:"Paced"`
+	Paced bool `xml:"Paced"`
 
 	// Medications contains the list of medications the patient is taking.
 	//
@@ -259,7 +259,7 @@ type Medications struct {
 	//
 	// XML Tag: <Medication>...</Medication>
 	// Cardinality: 0..* (multiple medications allowed)
-	Medication []string `xml:"Medication,omitempty"`
+	Medication []string `xml:"Medication"`
 }
 
 // ClinicalClassifications represents clinical classification information.
@@ -281,5 +281,5 @@ type ClinicalClassifications struct {
 	//
 	// XML Tag: <ClinicalClassification>...</ClinicalClassification>
 	// Cardinality: 0..* (multiple classifications allowed)
-	ClinicalClassification []string `xml:"ClinicalClassification,omitempty"`
+	ClinicalClassification []string `xml:"ClinicalClassification"`
 }
