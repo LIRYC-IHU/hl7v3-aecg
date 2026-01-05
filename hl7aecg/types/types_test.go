@@ -133,37 +133,43 @@ func TestID_String(t *testing.T) {
 // TestCode_NewCode tests the NewCode constructor function
 func TestCode_NewCode(t *testing.T) {
 	tests := []struct {
-		name            string
-		code            string
-		codeSystem      string
-		displayName     string
-		wantCode        string
-		wantCodeSystem  string
-		wantDisplayName string
+		name               string
+		code               string
+		codeSystem         string
+		displayName        string
+		codeSystemName     string
+		wantCode           string
+		wantCodeSystem     string
+		wantCodeSystemName string
+		wantDisplayName    string
 	}{
 		{
-			name:            "Create code with all fields",
-			code:            "93000",
-			codeSystem:      "2.16.840.1.113883.6.12",
-			displayName:     "Routine ECG",
-			wantCode:        "93000",
-			wantCodeSystem:  "2.16.840.1.113883.6.12",
-			wantDisplayName: "Routine ECG",
+			name:               "Create code with all fields",
+			code:               "93000",
+			codeSystem:         "2.16.840.1.113883.6.12",
+			codeSystemName:     "CPT-4",
+			displayName:        "Routine ECG",
+			wantCode:           "93000",
+			wantCodeSystem:     "2.16.840.1.113883.6.12",
+			wantCodeSystemName: "CPT-4",
+			wantDisplayName:    "Routine ECG",
 		},
 		{
-			name:            "Create code without display name",
-			code:            "RHYTHM",
-			codeSystem:      "2.16.840.1.113883.5.4",
-			displayName:     "",
-			wantCode:        "RHYTHM",
-			wantCodeSystem:  "2.16.840.1.113883.5.4",
-			wantDisplayName: "",
+			name:               "Create code without display name",
+			code:               "RHYTHM",
+			codeSystem:         "2.16.840.1.113883.5.4",
+			codeSystemName:     "CPT-4",
+			displayName:        "",
+			wantCode:           "RHYTHM",
+			wantCodeSystem:     "2.16.840.1.113883.5.4",
+			wantCodeSystemName: "CPT-4",
+			wantDisplayName:    "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewCode[string, string](tt.code, tt.codeSystem, tt.displayName)
+			got := NewCode[string, string](tt.code, tt.codeSystem, tt.codeSystemName, tt.displayName)
 
 			if got.Code != tt.wantCode {
 				t.Errorf("NewCode() Code = %v, want %v", got.Code, tt.wantCode)
@@ -174,6 +180,9 @@ func TestCode_NewCode(t *testing.T) {
 			if got.DisplayName != tt.wantDisplayName {
 				t.Errorf("NewCode() DisplayName = %v, want %v", got.DisplayName, tt.wantDisplayName)
 			}
+			if got.CodeSystemName != tt.wantCodeSystemName {
+				t.Errorf("NewCode() CodeSystemName = %v, want %v", got.CodeSystemName, tt.wantCodeSystemName)
+			}
 		})
 	}
 }
@@ -181,44 +190,51 @@ func TestCode_NewCode(t *testing.T) {
 // TestCode_SetCode tests the SetCode method
 func TestCode_SetCode(t *testing.T) {
 	tests := []struct {
-		name            string
-		initialCode     *Code[string, string]
-		code            string
-		codeSystem      string
-		displayName     string
-		wantCode        string
-		wantCodeSystem  string
-		wantDisplayName string
+		name               string
+		initialCode        *Code[string, string]
+		code               string
+		codeSystem         string
+		codeSystemName     string
+		displayName        string
+		wantCode           string
+		wantCodeSystem     string
+		wantCodeSystemName string
+		wantDisplayName    string
 	}{
 		{
-			name:            "Set code on empty code",
-			initialCode:     &Code[string, string]{},
-			code:            "M",
-			codeSystem:      "2.16.840.1.113883.5.1",
-			displayName:     "Male",
-			wantCode:        "M",
-			wantCodeSystem:  "2.16.840.1.113883.5.1",
-			wantDisplayName: "Male",
+			name:               "Set code on empty code",
+			initialCode:        &Code[string, string]{},
+			code:               "M",
+			codeSystem:         "2.16.840.1.113883.5.1",
+			codeSystemName:     "CPT-4",
+			displayName:        "Male",
+			wantCode:           "M",
+			wantCodeSystem:     "2.16.840.1.113883.5.1",
+			wantCodeSystemName: "CPT-4",
+			wantDisplayName:    "Male",
 		},
 		{
 			name: "Update existing code",
 			initialCode: &Code[string, string]{
-				Code:        "OLD",
-				CodeSystem:  "OLD_SYSTEM",
-				DisplayName: "Old Display",
+				Code:           "OLD",
+				CodeSystem:     "OLD_SYSTEM",
+				DisplayName:    "Old Display",
+				CodeSystemName: "OLD_NAME",
 			},
-			code:            "NEW",
-			codeSystem:      "NEW_SYSTEM",
-			displayName:     "New Display",
-			wantCode:        "NEW",
-			wantCodeSystem:  "NEW_SYSTEM",
-			wantDisplayName: "New Display",
+			code:               "NEW",
+			codeSystem:         "NEW_SYSTEM",
+			displayName:        "New Display",
+			codeSystemName:     "NEW_NAME",
+			wantCode:           "NEW",
+			wantCodeSystem:     "NEW_SYSTEM",
+			wantCodeSystemName: "NEW_NAME",
+			wantDisplayName:    "New Display",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.initialCode.SetCode(tt.code, tt.codeSystem, tt.displayName)
+			tt.initialCode.SetCode(tt.code, tt.codeSystem, tt.codeSystemName, tt.displayName)
 
 			if tt.initialCode.Code != tt.wantCode {
 				t.Errorf("SetCode() Code = %v, want %v", tt.initialCode.Code, tt.wantCode)
@@ -228,6 +244,9 @@ func TestCode_SetCode(t *testing.T) {
 			}
 			if tt.initialCode.DisplayName != tt.wantDisplayName {
 				t.Errorf("SetCode() DisplayName = %v, want %v", tt.initialCode.DisplayName, tt.wantDisplayName)
+			}
+			if tt.initialCode.CodeSystemName != tt.wantCodeSystemName {
+				t.Errorf("SetCode() CodeSystemName = %v, want %v", tt.initialCode.CodeSystemName, tt.wantCodeSystemName)
 			}
 		})
 	}

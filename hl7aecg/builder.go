@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
-	"github.com/google/uuid"
 )
 
 // =============================================================================
@@ -80,14 +79,14 @@ func (h *Hl7xml) buildSeries(
 	origin, scale float64,
 ) *types.Series {
 	series := &types.Series{
-		ID:   &types.ID{Root: uuid.New().String()},
+		ID:   &types.ID{},
 		Code: &types.Code[types.SeriesTypeCode, types.CodeSystemOID]{},
 		EffectiveTime: types.EffectiveTime{
 			Low:  types.Time{Value: startTime},
 			High: types.Time{Value: endTime},
 		},
 	}
-	series.Code.SetCode(seriesType, types.HL7_ActCode_OID, "")
+	series.Code.SetCode(seriesType, types.HL7_ActCode_OID, "", "")
 
 	// Calculate increment from sample rate: increment = 1 / sampleRate seconds
 	increment := 1.0 / sampleRate
@@ -112,7 +111,7 @@ func (h *Hl7xml) buildSeries(
 	}
 	// Set time code
 	timeSeq.Sequence.Code.Time = &types.Code[types.TimeSequenceCode, types.CodeSystemOID]{}
-	timeSeq.Sequence.Code.Time.SetCode(types.TIME_ABSOLUTE_CODE, types.HL7_ActCode_OID, "")
+	timeSeq.Sequence.Code.Time.SetCode(types.TIME_ABSOLUTE_CODE, types.HL7_ActCode_OID, "ActCode", "")
 	sequenceSet.Component = append(sequenceSet.Component, timeSeq)
 
 	// Add lead sequences
@@ -161,7 +160,7 @@ func (h *Hl7xml) buildLeadSequence(
 		},
 	}
 	seq.Sequence.Code.Lead = &types.Code[types.LeadCode, types.CodeSystemOID]{}
-	seq.Sequence.Code.Lead.SetCode(leadCode, types.MDC_OID, "")
+	seq.Sequence.Code.Lead.SetCode(leadCode, types.MDC_OID, "MDC", "")
 	return seq
 }
 
@@ -189,7 +188,7 @@ func (h *Hl7xml) SetSeriesAuthor(
 				Root:      manufacturerID,
 				Extension: deviceID,
 			},
-			Code:                  types.NewCode(deviceType, types.CodeSystemOID(""), ""),
+			Code:                  types.NewCode(deviceType, types.CodeSystemOID(""), "", ""),
 			ManufacturerModelName: &modelName,
 			SoftwareName:          &softwareName,
 		},

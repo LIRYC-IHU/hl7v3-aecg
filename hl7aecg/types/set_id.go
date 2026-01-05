@@ -1,23 +1,50 @@
 package types
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+	"sync"
+)
 
-type Identifiable interface {
-	SetID(id, extension string) Identifiable
-	GetID() ID
-	IsEmpty() bool
-	String() string
+// Create Singloton rootID stringvar rootID string
+
+type InstanceID struct {
+	ID        string
+	Extension string
 }
 
-// SetID sets the ID of the TrailSubject instance.
+var (
+	instanceID *InstanceID
+	once       sync.Once
+)
+
+// SetID sets the ID of the instance.
+//
+// Parameters:
+//   - id: The root ID value (OID or custom identifier)
+//   - extension: Optional extension to the ID
+//
+// Note: No automatic UUID generation. The caller must provide a valid ID.
+
 func (i *ID) SetID(id, extension string) {
 	if id == "" {
-		id = uuid.New().String()
+		if instanceID != nil {
+			i.Root = instanceID.ID
+		}
+	} else {
+		i.Root = id
+
 	}
 	if extension != "" {
 		i.Extension = extension
 	}
-	i.Root = id
+}
+
+func SetRootID(id, extension string) *InstanceID {
+	once.Do(func() {
+		fmt.Println("Setting singleton InstanceID")
+		instanceID = &InstanceID{ID: id, Extension: extension}
+	})
+	return instanceID
 }
 
 func (i ID) GetID() ID {

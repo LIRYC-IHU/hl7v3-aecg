@@ -22,14 +22,14 @@ func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 	}
 
 	// Initialize with routine ECG code
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 
 	// Set document ID (required)
 	h.HL7AEcg.ID.SetID("", "TEST-DOC-001")
 
 	// Set required codes (initialized by NewHl7xml, must be valid)
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 
 	// Set basic metadata
 	h.SetText("Test ECG Document").
@@ -60,7 +60,7 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	h := NewHl7xml(tmpDir)
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 
 	// Set document ID (required)
 	h.HL7AEcg.ID.SetID("", "TEST-FULL-DOC-001")
@@ -70,10 +70,10 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 
 	// Set confidentiality and reason codes
 	h.HL7AEcg.ConfidentialityCode = &types.Code[types.ConfidentialityCode, string]{}
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "Blinded to sponsor")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "Blinded to sponsor", "")
 
 	h.HL7AEcg.ReasonCode = &types.Code[types.ReasonCode, string]{}
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "Per protocol")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "Per protocol", "")
 
 	// Set subject with demographics (empty ID generates UUID)
 	h.SetSubject("", "SUBJ-12345", types.SUBJECT_ROLE_ENROLLED).
@@ -127,10 +127,10 @@ func TestXMLMarshaling(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	h := NewHl7xml(tmpDir)
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 	h.HL7AEcg.ID.SetID("", "TEST-XML-001")
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetText("XML Marshaling Test").
 		SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
@@ -219,7 +219,7 @@ func TestValidation_ErrorCases(t *testing.T) {
 		{
 			name: "Missing effective time",
 			setupFunc: func(h *Hl7xml) {
-				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 				h.HL7AEcg.Subject = &types.TrialSubject{
 					ID: &types.ID{Root: "2.16.840.1.113883.3.1234"},
 				}
@@ -230,7 +230,7 @@ func TestValidation_ErrorCases(t *testing.T) {
 		{
 			name: "Missing subject",
 			setupFunc: func(h *Hl7xml) {
-				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID).
+				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
 					SetEffectiveTime("20231223120000", "20231223120010")
 				h.HL7AEcg.Subject = nil
 			},
@@ -239,10 +239,10 @@ func TestValidation_ErrorCases(t *testing.T) {
 		{
 			name: "Valid complete document",
 			setupFunc: func(h *Hl7xml) {
-				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 				h.HL7AEcg.ID.SetID("", "VALID-DOC-001")
-				h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-				h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+				h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+				h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 				h.SetEffectiveTime("20231223120000", "20231223120010").
 					SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 			},
@@ -269,10 +269,10 @@ func TestFileOutput(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	h := NewHl7xml(tmpDir)
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 	h.HL7AEcg.ID.SetID("", "TEST-FILE-001")
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetText("File Output Test").
 		SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
@@ -315,11 +315,11 @@ func TestFluentAPI_Chaining(t *testing.T) {
 
 	// All methods should return *Hl7xml for chaining
 	result := NewHl7xml(tmpDir).
-		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 
 	result.HL7AEcg.ID.SetID("", "TEST-FLUENT-001")
-	result.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	result.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	result.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	result.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 
 	result.SetText("Fluent API Test").
 		SetEffectiveTime("20231223120000", "20231223120010").
@@ -350,10 +350,10 @@ func TestContextCancellation(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	h := NewHl7xml(tmpDir)
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 	h.HL7AEcg.ID.SetID("", "TEST-CTX-001")
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
@@ -375,10 +375,10 @@ func TestMultipleSeries(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	h := NewHl7xml(tmpDir)
-	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 	h.HL7AEcg.ID.SetID("", "TEST-MULTI-001")
-	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "")
-	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetEffectiveTime("20231223120000", "20231223120100").
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 

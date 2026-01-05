@@ -2,11 +2,8 @@ package types
 
 import (
 	"context"
-	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Validate performs validation checks on the HL7AEcg instance.
@@ -61,13 +58,8 @@ func (id *ID) Validate(ctx context.Context, vctx *ValidationContext) error {
 		vctx.AddError(ErrMissingID)
 		return nil
 	}
-	if _, err := uuid.Parse(id.Root); err == nil {
-		return nil
-	}
-	if valid, _ := regexp.MatchString(`^[0-9.]+$`, id.Root); valid {
-		return nil
-	}
-	vctx.AddError(ErrInvalidID)
+	// Accept any non-empty Root value (OID, custom identifier, etc.)
+	// No specific format validation required
 	return nil
 }
 

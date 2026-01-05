@@ -334,11 +334,12 @@ type Code[T ~string, U ~string] struct {
 }
 
 // NewConfidentialityCode creates a new confidentiality code instance.
-func NewCode[T ~string, U ~string](code T, codeSystem U, displayName string) *Code[T, U] {
+func NewCode[T ~string, U ~string](code T, codeSystem U, codeSystemName string, displayName string) *Code[T, U] {
 	return &Code[T, U]{
-		Code:        code,
-		CodeSystem:  codeSystem,
-		DisplayName: displayName,
+		Code:           code,
+		CodeSystem:     codeSystem,
+		CodeSystemName: codeSystemName,
+		DisplayName:    displayName,
 	}
 }
 

@@ -54,7 +54,7 @@ func TestInitialize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewHl7xml("/tmp/test")
-			result := h.Initialize(tt.code, tt.codeSystem)
+			result := h.Initialize(tt.code, tt.codeSystem, "", "")
 
 			if result == nil {
 				t.Errorf("Initialize() returned nil")
@@ -107,7 +107,7 @@ func TestSetText(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 			result := h.SetText(tt.text)
 
 			if result == nil {
@@ -143,7 +143,7 @@ func TestSetEffectiveTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 			result := h.SetEffectiveTime(tt.low, tt.high)
 
 			if result == nil {
@@ -191,7 +191,7 @@ func TestSetSubject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 			result := h.SetSubject(tt.id, tt.extension, tt.code)
 
 			if result == nil {
@@ -244,7 +244,7 @@ func TestSetSubjectDemographics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewHl7xml("/tmp/test").
-				Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID).
+				Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
 				SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED)
 
 			result := h.SetSubjectDemographics(tt.subjName, tt.gender, tt.birthDate, tt.race)
@@ -306,7 +306,7 @@ func TestAddRhythmSeries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 			result := h.AddRhythmSeries(tt.startTime, tt.endTime, tt.sampleRate, tt.leads, tt.origin, tt.scale)
 
 			if result == nil {
@@ -373,7 +373,7 @@ func TestAddRepresentativeBeatSeries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID)
+			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 			result := h.AddRepresentativeBeatSeries(tt.startTime, tt.endTime, tt.sampleRate, tt.leads, tt.origin, tt.scale)
 
 			if result == nil {
@@ -403,7 +403,7 @@ func TestAddRepresentativeBeatSeries(t *testing.T) {
 // TestFluentAPI tests the fluent API (method chaining)
 func TestFluentAPI(t *testing.T) {
 	h := NewHl7xml("/tmp/test").
-		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID).
+		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "").
 		SetText("Test ECG").
 		SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED).

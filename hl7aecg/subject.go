@@ -52,7 +52,7 @@ func (h *Hl7xml) SetSubject(id, extension string, code types.CodeRole) *Hl7xml {
 		if trialSubject.Code == nil {
 			trialSubject.Code = &types.Code[types.CodeRole, types.CodeSystemOID]{}
 		}
-		trialSubject.Code.SetCode(code, types.HL7_ResearchSubjectRoleBasis_OID, "")
+		trialSubject.Code.SetCode(code, types.HL7_ResearchSubjectRoleBasis_OID, "", "")
 	}
 	trialSubject.SubjectDemographicPerson.SetMedications().SetClinicalClassifications()
 
@@ -72,7 +72,7 @@ func (h *Hl7xml) SetSubject(id, extension string, code types.CodeRole) *Hl7xml {
 // Example:
 //
 //	h.SetSubjectDemographics("BDB", types.GENDER_MALE, "19530508", types.RACE_WHITE)
-func (h *Hl7xml) SetSubjectDemographics(name string, gender types.GenderCode, birthDate string, race types.RaceCode) *Hl7xml {
+func (h *Hl7xml) SetSubjectDemographics(name string, patientID string, gender types.GenderCode, birthDate string, race types.RaceCode) *Hl7xml {
 	// Ensure ComponentOf structure exists
 	if h.HL7AEcg.ComponentOf == nil {
 		// Initialize with empty structure - SetSubject should be called first
@@ -101,19 +101,11 @@ func (h *Hl7xml) SetSubjectDemographics(name string, gender types.GenderCode, bi
 	}
 
 	demo := trialSubject.SubjectDemographicPerson
-
-	if name != "" {
-		demo.SetName(name)
-	}
-	if gender != "" {
-		demo.SetGender(gender, "")
-	}
-	if birthDate != "" {
-		demo.SetBirthDate(birthDate)
-	}
-	if race != "" {
-		demo.SetRace(race, "", "")
-	}
+	demo.SetName(name)
+	demo.SetGender(gender, types.HL7_ActAdministrativeGender_OID)
+	demo.SetBirthDate(birthDate)
+	demo.SetRace(race, types.HL7_Race_OID, "Race", "")
+	demo.SetPatientID(patientID)
 
 	return h
 }

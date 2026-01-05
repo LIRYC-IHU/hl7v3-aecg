@@ -20,7 +20,7 @@ func (s *SubjectDemographicPerson) SetGender(gender GenderCode, codeSystem CodeS
 	if s.AdministrativeGenderCode == nil {
 		s.AdministrativeGenderCode = &Code[GenderCode, CodeSystemOID]{}
 	}
-	s.AdministrativeGenderCode.SetCode(gender, codeSystem, "")
+	s.AdministrativeGenderCode.SetCode(gender, codeSystem, "", "")
 	return s
 }
 
@@ -46,14 +46,14 @@ func (s *SubjectDemographicPerson) SetBirthDate(birthDate string) *SubjectDemogr
 //   - RACE_OTHER ("2131-1")
 //
 // Example: SetRace(RACE_WHITE)
-func (s *SubjectDemographicPerson) SetRace(raceCode RaceCode, codeSystem CodeSystemOID, display string) *SubjectDemographicPerson {
+func (s *SubjectDemographicPerson) SetRace(raceCode RaceCode, codeSystem CodeSystemOID, codeSystemName, display string) *SubjectDemographicPerson {
 	if s.RaceCode == nil {
 		s.RaceCode = &Code[RaceCode, CodeSystemOID]{}
 	}
 	if codeSystem == "" {
 		codeSystem = HL7_Race_OID
 	}
-	s.RaceCode.SetCode(raceCode, codeSystem, display)
+	s.RaceCode.SetCode(raceCode, codeSystem, codeSystemName, display)
 	return s
 }
 

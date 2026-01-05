@@ -7,8 +7,8 @@ type SetCode[T ~string, U ~string] interface {
 	String() string
 }
 
-func (c *Code[T, U]) SetCode(code T, codeSystem U, display string) {
-	newCode := NewCode(code, codeSystem, display)
+func (c *Code[T, U]) SetCode(code T, codeSystem U, codeSystemName, display string) {
+	newCode := NewCode(code, codeSystem, codeSystemName, display)
 	*c = *newCode
 }
 

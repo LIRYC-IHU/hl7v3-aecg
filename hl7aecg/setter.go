@@ -29,7 +29,8 @@ func (h *Hl7xml) SetEffectiveTime(low, high string) *Hl7xml {
 //   - country: Country name (optional, use "" to skip)
 //
 // Example:
-//   h.SetLocation("SITE_001", "2.16.840.1.113883.3.5", "Boston Medical Center", "Boston", "MA", "USA")
+//
+//	h.SetLocation("SITE_001", "2.16.840.1.113883.3.5", "Boston Medical Center", "Boston", "MA", "USA")
 func (h *Hl7xml) SetLocation(siteID, siteRoot, siteName, city, state, country string) *Hl7xml {
 	// Ensure ComponentOf structure exists (should be initialized by SetSubject)
 	if h.HL7AEcg.ComponentOf == nil {
@@ -43,10 +44,7 @@ func (h *Hl7xml) SetLocation(siteID, siteRoot, siteName, city, state, country st
 	if clinicalTrial.Location == nil {
 		clinicalTrial.Location = &types.Location{
 			TrialSite: types.TrialSite{
-				ID: types.ID{
-					Root:      siteRoot,
-					Extension: siteID,
-				},
+				ID:       types.ID{},
 				Location: &types.SiteLocation{},
 			},
 		}
@@ -61,6 +59,7 @@ func (h *Hl7xml) SetLocation(siteID, siteRoot, siteName, city, state, country st
 	if city != "" || state != "" || country != "" {
 		clinicalTrial.Location.TrialSite.Location.SetFullAddress(city, state, country)
 	}
+	clinicalTrial.Location.TrialSite.ID.SetID(siteRoot, siteID)
 
 	return h
 }
