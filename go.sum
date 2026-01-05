@@ -1,2 +1,4 @@
+github.com/ECUST-XX/xml v1.20.2 h1:xqg5JaYfcGtkXtLcAN0H1sbTWwRdIHjmU/ZRPmtj+8k=
+github.com/ECUST-XX/xml v1.20.2/go.mod h1:AHwv/5bl6dD2mohWd7efbLVKEF+SllOsrynpQVhWM0o=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
