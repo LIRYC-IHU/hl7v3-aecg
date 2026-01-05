@@ -56,3 +56,114 @@ func (s *SubjectDemographicPerson) SetRace(raceCode RaceCode, codeSystem CodeSys
 	s.RaceCode.SetCode(raceCode, codeSystem, display)
 	return s
 }
+
+// SetPatientID sets the primary patient identifier.
+//
+// This is typically the hospital or institution's internal patient ID.
+//
+// Example: SetPatientID("25060897140")
+func (s *SubjectDemographicPerson) SetPatientID(patientID string) *SubjectDemographicPerson {
+	s.PatientID = &patientID
+	return s
+}
+
+// SetSecondPatientID sets the optional secondary patient identifier.
+//
+// Used when the patient has multiple identification numbers
+// (e.g., different hospital systems).
+//
+// Example: SetSecondPatientID("ALT-123456")
+func (s *SubjectDemographicPerson) SetSecondPatientID(secondPatientID string) *SubjectDemographicPerson {
+	s.SecondPatientID = &secondPatientID
+	return s
+}
+
+// SetAge sets the subject's age at the time of ECG acquisition.
+//
+// Can be represented as a number (years) or other format.
+//
+// Example: SetAge("65")
+func (s *SubjectDemographicPerson) SetAge(age string) *SubjectDemographicPerson {
+	s.Age = &age
+	return s
+}
+
+// SetPaced sets whether the patient has a cardiac pacemaker.
+//
+// Example: SetPaced(true)
+func (s *SubjectDemographicPerson) SetPaced(paced bool) *SubjectDemographicPerson {
+	s.Paced = &paced
+	return s
+}
+
+// AddMedication adds a medication to the patient's medication list.
+//
+// Each call adds one medication. Call multiple times to add multiple medications.
+//
+// Example:
+//   AddMedication("Aspirin 100mg").
+//   AddMedication("Metoprolol 50mg")
+func (s *SubjectDemographicPerson) AddMedication(medication string) *SubjectDemographicPerson {
+	s.Medications.Medication = append(s.Medications.Medication, medication)
+	return s
+}
+
+// SetMedications initializes or resets the medications list.
+//
+// Use this to start a fresh medication list, then chain with AddMedication().
+//
+// Example: SetMedications().AddMedication("Aspirin")
+func (s *SubjectDemographicPerson) SetMedications() *SubjectDemographicPerson {
+	s.Medications = Medications{
+		Medication: []string{},
+	}
+	return s
+}
+
+// AddClinicalClassification adds a clinical classification to the patient's record.
+//
+// Each call adds one classification. Call multiple times to add multiple classifications.
+//
+// Example:
+//   AddClinicalClassification("Hypertension").
+//   AddClinicalClassification("Diabetes Type 2")
+func (s *SubjectDemographicPerson) AddClinicalClassification(classification string) *SubjectDemographicPerson {
+	s.ClinicalClassifications.ClinicalClassification = append(s.ClinicalClassifications.ClinicalClassification, classification)
+	return s
+}
+
+// SetClinicalClassifications initializes or resets the clinical classifications list.
+//
+// Use this to start a fresh classifications list, then chain with AddClinicalClassification().
+//
+// Example: SetClinicalClassifications().AddClinicalClassification("Hypertension")
+func (s *SubjectDemographicPerson) SetClinicalClassifications() *SubjectDemographicPerson {
+	s.ClinicalClassifications = ClinicalClassifications{
+		ClinicalClassification: []string{},
+	}
+	return s
+}
+
+// SetBed sets the patient's bed location within the facility.
+//
+// Example: SetBed("12A")
+func (s *SubjectDemographicPerson) SetBed(bed string) *SubjectDemographicPerson {
+	s.Bed = bed
+	return s
+}
+
+// SetRoom sets the patient's room number or identifier.
+//
+// Example: SetRoom("302")
+func (s *SubjectDemographicPerson) SetRoom(room string) *SubjectDemographicPerson {
+	s.Room = room
+	return s
+}
+
+// SetPointOfCare sets the care unit or department.
+//
+// Example: SetPointOfCare("Cardiology ICU")
+func (s *SubjectDemographicPerson) SetPointOfCare(pointOfCare string) *SubjectDemographicPerson {
+	s.PointOfCare = pointOfCare
+	return s
+}
