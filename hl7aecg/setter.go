@@ -63,3 +63,66 @@ func (h *Hl7xml) SetLocation(siteID, siteRoot, siteName, city, state, country st
 
 	return h
 }
+
+// SetResponsibleParty configures the trial investigator responsible for ECG acquisition.
+//
+// This method uses the ComponentOf structure to access ClinicalTrial > Location > TrialSite.
+//
+// Parameters:
+//   - investigatorRoot: OID for the investigator (use "" to use global root ID from singleton)
+//   - investigatorID: Investigator identifier extension (e.g., "INV_001", "trialInvestigator")
+//   - prefix: Title/honorific (e.g., "Dr.", "Prof.") - use "" to skip
+//   - given: Given/first name - use "" to skip
+//   - family: Family/last name - use "" to skip
+//   - suffix: Suffix/credentials (e.g., "MD", "PhD") - use "" to skip
+//
+// Example:
+//
+//	h.SetResponsibleParty("", "INV_001", "Dr.", "John", "Smith", "MD")
+//
+// To set an empty name element (like <name/>), pass empty strings for all name components:
+//
+//	h.SetResponsibleParty("", "trialInvestigator", "", "", "", "")
+func (h *Hl7xml) SetResponsibleParty(investigatorRoot, investigatorID, prefix, given, family, suffix string) *Hl7xml {
+	// Ensure ComponentOf structure exists (should be initialized by SetSubject)
+	if h.HL7AEcg.ComponentOf == nil {
+		h.SetSubject("", "", "") // Initialize structure
+	}
+
+	// Get reference to ClinicalTrial in ComponentOf structure
+	clinicalTrial := &h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.ComponentOf.ClinicalTrial
+
+	// Initialize Location if nil
+	if clinicalTrial.Location == nil {
+		clinicalTrial.Location = &types.Location{
+			TrialSite: types.TrialSite{
+				ID: types.ID{},
+			},
+		}
+	}
+
+	// Initialize ResponsibleParty if nil
+	if clinicalTrial.Location.TrialSite.ResponsibleParty == nil {
+		clinicalTrial.Location.TrialSite.ResponsibleParty = &types.ResponsibleParty{
+			TrialInvestigator: types.TrialInvestigator{
+				ID: types.ID{},
+			},
+		}
+	}
+
+	rp := clinicalTrial.Location.TrialSite.ResponsibleParty
+
+	// Set investigator ID
+	rp.SetInvestigatorID(investigatorRoot, investigatorID)
+
+	// Set investigator name if any component is provided
+	if prefix != "" || given != "" || family != "" || suffix != "" {
+		rp.SetInvestigatorName(prefix, given, family, suffix)
+	} else {
+		// Set empty name element
+		rp.SetEmptyInvestigatorName()
+	}
+
+	return h
+}
+

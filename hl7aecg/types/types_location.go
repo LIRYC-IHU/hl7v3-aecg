@@ -70,6 +70,13 @@ type TrialSite struct {
 	// XML Tag: <location>...</location>
 	// Cardinality: Optional
 	Location *SiteLocation `xml:"location,omitempty"`
+
+	// ResponsibleParty contains information about the trial investigator
+	// responsible for ECG waveform acquisition at this site.
+	//
+	// XML Tag: <responsibleParty>...</responsibleParty>
+	// Cardinality: Optional
+	ResponsibleParty *ResponsibleParty `xml:"responsibleParty,omitempty"`
 }
 
 // SiteLocation represents the physical location details of a trial site.
