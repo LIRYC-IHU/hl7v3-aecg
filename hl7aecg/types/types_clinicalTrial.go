@@ -84,6 +84,15 @@ type ClinicalTrial struct {
 	// XML Tag: <activityTime>...</activityTime>
 	// Cardinality: Optional
 	ActivityTime EffectiveTime `xml:"activityTime"`
+
+	// Location identifies the trial site location where ECG waveforms were acquired.
+	//
+	// This provides information about the physical location and facility
+	// where the subject's data was collected.
+	//
+	// XML Tag: <location>...</location>
+	// Cardinality: Optional
+	Location *Location `xml:"location,omitempty"`
 }
 
 // GetIdentifier returns a human-readable string representation of the trial identifier.
