@@ -24,6 +24,9 @@ func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 	// Initialize with routine ECG code
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 
+	// Set global root ID for this test
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
+
 	// Set document ID (required)
 	h.HL7AEcg.ID.SetID("", "TEST-DOC-001")
 
@@ -35,7 +38,7 @@ func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 	h.SetText("Test ECG Document").
 		SetEffectiveTime("20231223120000", "20231223120010")
 
-	// Set subject information (empty ID generates UUID)
+	// Set subject information (empty ID uses global root ID)
 	h.SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
 	// Validate the document
@@ -50,8 +53,8 @@ func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 	if h.HL7AEcg.EffectiveTime == nil {
 		t.Error("EffectiveTime not set")
 	}
-	if h.HL7AEcg.Subject == nil {
-		t.Error("Subject not set")
+	if h.HL7AEcg.ComponentOf == nil {
+		t.Error("Subject not set (ComponentOf is nil)")
 	}
 }
 
@@ -61,6 +64,9 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 
 	h := NewHl7xml(tmpDir)
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+
+	// Set global root ID for this test
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 
 	// Set document ID (required)
 	h.HL7AEcg.ID.SetID("", "TEST-FULL-DOC-001")
@@ -75,9 +81,9 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 	h.HL7AEcg.ReasonCode = &types.Code[types.ReasonCode, string]{}
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "Per protocol", "")
 
-	// Set subject with demographics (empty ID generates UUID)
+	// Set subject with demographics (empty ID uses global root ID)
 	h.SetSubject("", "SUBJ-12345", types.SUBJECT_ROLE_ENROLLED).
-		SetSubjectDemographics("JDO", types.GENDER_MALE, "19530508", types.RACE_WHITE)
+		SetSubjectDemographics("JDO", "PAT-12345", types.GENDER_MALE, "19530508", types.RACE_WHITE)
 
 	// Add rhythm series with multiple leads
 	leads := map[types.LeadCode][]int{
@@ -128,6 +134,7 @@ func TestXMLMarshaling(t *testing.T) {
 
 	h := NewHl7xml(tmpDir)
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 	h.HL7AEcg.ID.SetID("", "TEST-XML-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
@@ -240,6 +247,7 @@ func TestValidation_ErrorCases(t *testing.T) {
 			name: "Valid complete document",
 			setupFunc: func(h *Hl7xml) {
 				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+				h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 				h.HL7AEcg.ID.SetID("", "VALID-DOC-001")
 				h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 				h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
@@ -270,6 +278,7 @@ func TestFileOutput(t *testing.T) {
 
 	h := NewHl7xml(tmpDir)
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 	h.HL7AEcg.ID.SetID("", "TEST-FILE-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
@@ -317,6 +326,7 @@ func TestFluentAPI_Chaining(t *testing.T) {
 	result := NewHl7xml(tmpDir).
 		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
 
+	result.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 	result.HL7AEcg.ID.SetID("", "TEST-FLUENT-001")
 	result.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	result.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
@@ -324,7 +334,7 @@ func TestFluentAPI_Chaining(t *testing.T) {
 	result.SetText("Fluent API Test").
 		SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED).
-		SetSubjectDemographics("JDO", types.GENDER_MALE, "19530508", types.RACE_WHITE)
+		SetSubjectDemographics("JDO", "PAT-001", types.GENDER_MALE, "19530508", types.RACE_WHITE)
 
 	if result == nil {
 		t.Fatal("Fluent API chain returned nil")
@@ -337,10 +347,11 @@ func TestFluentAPI_Chaining(t *testing.T) {
 	if result.HL7AEcg.EffectiveTime == nil {
 		t.Error("SetEffectiveTime did not work in chain")
 	}
-	if result.HL7AEcg.Subject == nil {
+	if result.HL7AEcg.ComponentOf == nil {
 		t.Error("SetSubject did not work in chain")
 	}
-	if result.HL7AEcg.Subject.SubjectDemographicPerson == nil {
+	if result.HL7AEcg.ComponentOf != nil &&
+		result.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.Subject.TrialSubject.SubjectDemographicPerson == nil {
 		t.Error("SetSubjectDemographics did not work in chain")
 	}
 }
@@ -351,6 +362,7 @@ func TestContextCancellation(t *testing.T) {
 
 	h := NewHl7xml(tmpDir)
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 	h.HL7AEcg.ID.SetID("", "TEST-CTX-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
@@ -376,6 +388,7 @@ func TestMultipleSeries(t *testing.T) {
 
 	h := NewHl7xml(tmpDir)
 	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
 	h.HL7AEcg.ID.SetID("", "TEST-MULTI-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")

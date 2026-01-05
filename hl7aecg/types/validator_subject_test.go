@@ -131,11 +131,11 @@ func TestTrialSubject_Validate(t *testing.T) {
 			wantError: ErrMissingID,
 		},
 		{
-			name: "Invalid ID format",
+			name: "Custom ID format (now allowed)",
 			trialSubject: TrialSubject{
 				ID: &ID{Root: "not-a-valid-id"},
 			},
-			wantError: ErrInvalidID,
+			wantError: nil, // Any non-empty Root is now valid
 		},
 	}
 

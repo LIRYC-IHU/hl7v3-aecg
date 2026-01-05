@@ -20,10 +20,10 @@ func TestID_SetID(t *testing.T) {
 			wantRootEmpty: false,
 		},
 		{
-			name:          "Set ID with extension only (UUID should be generated)",
+			name:          "Set ID with extension only (root stays empty without singleton)",
 			root:          "",
 			extension:     "TEST-002",
-			wantRootEmpty: false, // UUID should be generated
+			wantRootEmpty: true, // No UUID generation, root stays empty
 		},
 		{
 			name:          "Set ID with root only",
@@ -44,11 +44,6 @@ func TestID_SetID(t *testing.T) {
 
 			if tt.extension != "" && id.Extension != tt.extension {
 				t.Errorf("SetID() Extension = %v, want %v", id.Extension, tt.extension)
-			}
-
-			// If root was empty, UUID should have been generated
-			if tt.root == "" && id.Root == "" {
-				t.Errorf("SetID() did not generate UUID when root was empty")
 			}
 
 			// If root was provided, it should be preserved

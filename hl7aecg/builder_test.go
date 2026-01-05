@@ -199,18 +199,19 @@ func TestSetSubject(t *testing.T) {
 				return
 			}
 
-			if h.HL7AEcg.Subject == nil {
-				t.Errorf("SetSubject() did not set Subject")
+			if h.HL7AEcg.ComponentOf == nil {
+				t.Errorf("SetSubject() did not set ComponentOf")
 				return
 			}
 
-			if h.HL7AEcg.Subject.ID == nil {
+			subject := &h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.Subject
+			if subject.TrialSubject.ID == nil {
 				t.Errorf("SetSubject() did not set Subject.ID")
 				return
 			}
 
-			if h.HL7AEcg.Subject.ID.Extension != tt.extension {
-				t.Errorf("SetSubject() Extension = %v, want %v", h.HL7AEcg.Subject.ID.Extension, tt.extension)
+			if subject.TrialSubject.ID.Extension != tt.extension {
+				t.Errorf("SetSubject() Extension = %v, want %v", subject.TrialSubject.ID.Extension, tt.extension)
 			}
 		})
 	}
@@ -221,6 +222,7 @@ func TestSetSubjectDemographics(t *testing.T) {
 	tests := []struct {
 		name      string
 		subjName  string
+		patientID string
 		gender    types.GenderCode
 		birthDate string
 		race      types.RaceCode
@@ -228,6 +230,7 @@ func TestSetSubjectDemographics(t *testing.T) {
 		{
 			name:      "Set complete demographics",
 			subjName:  "JDO",
+			patientID: "PAT-001",
 			gender:    types.GENDER_MALE,
 			birthDate: "19800101",
 			race:      types.RACE_WHITE,
@@ -235,6 +238,7 @@ func TestSetSubjectDemographics(t *testing.T) {
 		{
 			name:      "Set demographics with female",
 			subjName:  "ABC",
+			patientID: "PAT-002",
 			gender:    types.GENDER_FEMALE,
 			birthDate: "19900615",
 			race:      types.RACE_BLACK_OR_AFRICAN_AMERICAN,
@@ -247,19 +251,20 @@ func TestSetSubjectDemographics(t *testing.T) {
 				Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
 				SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED)
 
-			result := h.SetSubjectDemographics(tt.subjName, tt.gender, tt.birthDate, tt.race)
+			result := h.SetSubjectDemographics(tt.subjName, tt.patientID, tt.gender, tt.birthDate, tt.race)
 
 			if result == nil {
 				t.Errorf("SetSubjectDemographics() returned nil")
 				return
 			}
 
-			if h.HL7AEcg.Subject.SubjectDemographicPerson == nil {
+			if h.HL7AEcg.ComponentOf == nil ||
+				h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.Subject.TrialSubject.SubjectDemographicPerson == nil {
 				t.Errorf("SetSubjectDemographics() did not set SubjectDemographicPerson")
 				return
 			}
 
-			person := h.HL7AEcg.Subject.SubjectDemographicPerson
+			person := h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.Subject.TrialSubject.SubjectDemographicPerson
 
 			if person.Name == nil || *person.Name != tt.subjName {
 				t.Errorf("SetSubjectDemographics() Name = %v, want %v", person.Name, tt.subjName)
@@ -407,7 +412,7 @@ func TestFluentAPI(t *testing.T) {
 		SetText("Test ECG").
 		SetEffectiveTime("20231223120000", "20231223120010").
 		SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED).
-		SetSubjectDemographics("JDO", types.GENDER_MALE, "19800101", types.RACE_WHITE)
+		SetSubjectDemographics("JDO", "PAT-001", types.GENDER_MALE, "19800101", types.RACE_WHITE)
 
 	if h == nil {
 		t.Errorf("Fluent API returned nil")
@@ -423,11 +428,11 @@ func TestFluentAPI(t *testing.T) {
 		t.Errorf("Fluent API did not set EffectiveTime")
 	}
 
-	if h.HL7AEcg.Subject == nil {
-		t.Errorf("Fluent API did not set Subject")
-	}
-
-	if h.HL7AEcg.Subject.SubjectDemographicPerson == nil {
-		t.Errorf("Fluent API did not set SubjectDemographicPerson")
+	if h.HL7AEcg.ComponentOf == nil {
+		t.Errorf("Fluent API did not set ComponentOf")
+	} else {
+		if h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.Subject.TrialSubject.SubjectDemographicPerson == nil {
+			t.Errorf("Fluent API did not set SubjectDemographicPerson")
+		}
 	}
 }

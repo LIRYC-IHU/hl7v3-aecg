@@ -123,11 +123,11 @@ func TestID_Validate(t *testing.T) {
 			wantError: ErrMissingID,
 		},
 		{
-			name: "Invalid format",
+			name: "Custom ID format (now allowed)",
 			id: ID{
 				Root: "invalid-id-format",
 			},
-			wantError: ErrInvalidID,
+			wantError: nil, // Any non-empty Root is now valid
 		},
 		{
 			name: "OID with extension",
@@ -578,8 +578,18 @@ func TestHL7AEcg_Validate(t *testing.T) {
 				EffectiveTime: &EffectiveTime{
 					Low: Time{Value: "20231223120000"},
 				},
-				Subject: &TrialSubject{
-					ID: &ID{Root: "2.16.840.1.113883.3.1234"},
+				ComponentOf: &ComponentOfTimepointEvent{
+					TimepointEvent: TimepointEvent{
+						ComponentOf: ComponentOfSubjectAssignment{
+							SubjectAssignment: SubjectAssignment{
+								Subject: Subject{
+									TrialSubject: TrialSubject{
+										ID: &ID{Root: "2.16.840.1.113883.3.1234"},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 			wantErrors:  nil,

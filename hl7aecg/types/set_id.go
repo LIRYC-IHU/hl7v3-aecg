@@ -39,7 +39,7 @@ func (i *ID) SetID(id, extension string) {
 	}
 }
 
-func SetRootID(id, extension string) *InstanceID {
+func (h *HL7AEcg) SetRootID(id, extension string) *InstanceID {
 	once.Do(func() {
 		fmt.Println("Setting singleton InstanceID")
 		instanceID = &InstanceID{ID: id, Extension: extension}
