@@ -160,6 +160,30 @@ type HL7AEcg struct {
 	// required: Yes (when not using ComponentOf structure)
 	ClinicalTrial *ClinicalTrial `xml:"clinicalTrial,omitempty"`
 
+	// Subject identifies the trial subject from which the ECG was obtained.
+	//
+	// id
+	// Required: The unique identifier for the subject. Composed of a root and optional extension.
+	// The root must be included, and is a UID. The optional extension may be anything. The
+	// combination of the root and extension must be universally unique.
+	// It is highly recommended at that sponsor (or its vendor) assign a unique OID to every
+	// subject. This OID will go into the root part of the ID. The traditional identifier will go into the
+	// extension.
+	// Code
+	// Optional: The role the subject was in at the time of the ECG waveform collection. As of this
+	// guide's publishing, HL7 had defined a vocabulary for this called
+	// "ResearchSubjectRoleBasis", UID=" 2.16.840.1.113883.5.111", but does not have any
+	// defined codes within it. Suggested values are:
+	// • SCREENING – the subject was being screened for participation in the trial but had
+	// not yet been enrolled.
+	// • ENROLLED – the subject was enrolled in the trial.
+	//
+	// Note: Can be provided either as a direct child OR nested within ComponentOf.
+	// If using ComponentOf structure, this field should be omitted.
+	//
+	// required: Yes (when not using ComponentOf structure)
+	Subject *TrialSubject `xml:"subject,omitempty"`
+
 	// Component contains the ECG waveform series and annotations.
 	//
 	// Although technically optional in the schema, an aECG without at least
