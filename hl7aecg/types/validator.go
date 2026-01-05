@@ -38,13 +38,17 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 	if e.ReasonCode != nil {
 		e.ReasonCode.ValidateCode(ctx, vctx, "ReasonCode")
 	}
-	// if e.ClinicalTrial == nil {
-	// 	vctx.AddError(ErrMissingClinicalTrial)
-	// } else {
-	// 	e.ClinicalTrial.Validate(ctx, vctx)
-	// }
-	if e.Subject != nil {
-		e.Subject.Validate(ctx, vctx)
+	// Validate ComponentOf structure if present
+	if e.ComponentOf != nil {
+		// Validate TimepointEvent and nested structures
+		te := &e.ComponentOf.TimepointEvent
+		sa := &te.ComponentOf.SubjectAssignment
+
+		// Validate Subject within ComponentOf
+		sa.Subject.Validate(ctx, vctx)
+
+		// Validate ClinicalTrial within ComponentOf (optional validation)
+		// sa.ComponentOf.ClinicalTrial.Validate(ctx, vctx)
 	} else {
 		vctx.AddError(ErrMissingSubject)
 	}

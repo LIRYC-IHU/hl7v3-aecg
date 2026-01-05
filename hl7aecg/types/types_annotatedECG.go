@@ -34,8 +34,13 @@ type ProcedureCode string
 // identifiers, codes, timing information, and confidentiality settings. It corresponds
 // to the <AnnotatedECG> XML element in the HL7 aECG schema.
 type HL7AEcg struct {
-	XMLName  xml.Name `xml:"urn:hl7-org:v3 AnnotatedECG"`
-	XmlnsXsi string   `xml:"xmlns:xsi,attr"`
+	XMLName xml.Name `xml:"AnnotatedECG"`
+
+	// Attribute to specify XML Schema Instance namespace.
+	Xmlns    string `xml:"xmlns,attr"`
+	XmlnsVoc string `xml:"xmlns:voc,attr"`
+	XmlnsXsi string `xml:"xmlns:xsi,attr"`
+
 	// ID is the unique identifier for this aECG document.
 	// Must be globally unique using UUID.
 	//
@@ -121,27 +126,39 @@ type HL7AEcg struct {
 	// study procedures or was acquired for other clinical reasons.
 	ReasonCode *Code[ReasonCode, string] `xml:"reasonCode,omitempty"`
 
+	// ComponentOf links this AnnotatedECG to a TimepointEvent (visit/study event).
+	//
+	// This is the complete HL7 aECG structure that includes timepoint event information
+	// and nests the subject and clinical trial within the componentOf hierarchy.
+	//
+	// When using ComponentOf, the Subject and ClinicalTrial should be nested within
+	// the TimepointEvent > SubjectAssignment structure instead of being direct children.
+	//
+	// XML Structure:
+	//   <componentOf>
+	//     <timepointEvent>
+	//       <componentOf>
+	//         <subjectAssignment>
+	//           <subject>...</subject>
+	//           <componentOf>
+	//             <clinicalTrial>...</clinicalTrial>
+	//           </componentOf>
+	//         </subjectAssignment>
+	//       </componentOf>
+	//     </timepointEvent>
+	//   </componentOf>
+	//
+	// XML Tag: <componentOf>...</componentOf>
+	// Cardinality: Optional (alternative to direct Subject/ClinicalTrial)
+	ComponentOf *ComponentOfTimepointEvent `xml:"componentOf,omitempty"`
+
 	// ClinicalTrial Protocol references the protocol defining the clinical trial.
 	//
-	// required: Yes
-	ClinicalTrial *ClinicalTrial `xml:"clinicalTrial"`
-
-	// id
-	// Required: The unique identifier for the subject. Composed of a root and optional extension.
-	// The root must be included, and is a UID. The optional extension may be anything. The
-	// combination of the root and extension must be universally unique.
-	// It is highly recommended at that sponsor (or its vendor) assign a unique OID to every
-	// subject. This OID will go into the root part of the ID. The traditional identifier will go into the
-	// extension.
-	// Code
-	// Optional: The role the subject was in at the time of the ECG waveform collection. As of this
-	// guide’s publishing, HL7 had defined a vocabulary for this called
-	// “ResearchSubjectRoleBasis”, UID=” 2.16.840.1.113883.5.111”, but does not have any
-	// defined codes within it. Suggested values are:
-	// • SCREENING – the subject was being screened for participation in the trial but had
-	// not yet been enrolled.
-	// • ENROLLED – the subject was enrolled in the trial.
-	Subject *TrialSubject `xml:"subject"`
+	// Note: Can be provided either as a direct child OR nested within ComponentOf.
+	// If using ComponentOf structure, this field should be omitted.
+	//
+	// required: Yes (when not using ComponentOf structure)
+	ClinicalTrial *ClinicalTrial `xml:"clinicalTrial,omitempty"`
 
 	// Component contains the ECG waveform series and annotations.
 	//
@@ -377,4 +394,25 @@ func NewEffectiveTime(low, high string) *EffectiveTime {
 // Time represents an HL7 Timestamp (TS datatype).
 type Time struct {
 	Value string `xml:"value,attr"`
+}
+
+// ComponentOfTimepointEvent links the AnnotatedECG to a TimepointEvent.
+//
+// This structure enables the complete HL7 aECG format where subject and
+// clinical trial information is nested within a timepoint event context.
+//
+// XML Structure:
+//
+//	<componentOf>
+//	  <timepointEvent>...</timepointEvent>
+//	</componentOf>
+//
+// Cardinality: Optional (within AnnotatedECG)
+// Reference: HL7 aECG Implementation Guide, Page 17-18
+type ComponentOfTimepointEvent struct {
+	// TimepointEvent represents the visit or study event during which the ECG was acquired.
+	//
+	// XML Tag: <timepointEvent>...</timepointEvent>
+	// Cardinality: Required (within ComponentOf)
+	TimepointEvent TimepointEvent `xml:"timepointEvent"`
 }

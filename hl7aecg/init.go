@@ -2,10 +2,10 @@ package hl7aecg
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"os"
 
+	"github.com/ECUST-XX/xml"
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
 )
 
@@ -20,6 +20,8 @@ func NewHl7xml(outputDir string) *Hl7xml {
 	return &Hl7xml{
 		HL7AEcg: types.HL7AEcg{
 			XmlnsXsi:            "http://www.w3.org/2001/XMLSchema-instance",
+			XmlnsVoc:            "urn:hl7-org:v3/voc",
+			Xmlns:               "urn:hl7-org:v3",
 			ID:                  &types.ID{},
 			Code:                &types.Code[types.CPT_CODE, types.CodeSystemOID]{},
 			ConfidentialityCode: &types.Code[types.ConfidentialityCode, string]{},
@@ -38,9 +40,17 @@ func (h *Hl7xml) Initialize(code types.CPT_CODE, codeSystem types.CodeSystemOID)
 	return h
 }
 
+func (h *Hl7xml) String() (string, error) {
+	data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func (h *Hl7xml) Test() (*Hl7xml, error) {
 	dir := "/tmp/hl7aecg_example.xml"
-	data, err := xml.MarshalIndent(h.HL7AEcg, "", "  ")
+	data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
 	if err != nil {
 		return h, err
 	}
