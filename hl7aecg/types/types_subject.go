@@ -143,7 +143,7 @@ type SubjectDemographicPerson struct {
 	//
 	// XML Tag: <birthTime value="..."/>
 	// Cardinality: Optional
-	BirthTime *Time `xml:"birthTime,omitempty"`
+	BirthTime *Time `xml:"birthTime"`
 
 	// RaceCode indicates the subject's race.
 	//
@@ -163,4 +163,123 @@ type SubjectDemographicPerson struct {
 	// XML Tag: <raceCode code="..." codeSystem="..."/>
 	// Cardinality: Optional
 	RaceCode *Code[RaceCode, CodeSystemOID] `xml:"raceCode,omitempty"`
+
+	// PatientID is the primary patient identifier.
+	//
+	// This is typically the hospital or institution's internal patient ID.
+	//
+	// Example: "25060897140"
+	//
+	// XML Tag: <PatientID>...</PatientID>
+	// Cardinality: Optional
+	PatientID *string `xml:"PatientID"`
+
+	// SecondPatientID is an optional secondary patient identifier.
+	//
+	// Used when the patient has multiple identification numbers
+	// (e.g., different hospital systems).
+	//
+	// XML Tag: <SecondPatientID>...</SecondPatientID>
+	// Cardinality: Optional
+	SecondPatientID *string `xml:"SecondPatientID"`
+
+	// Age is the subject's age at the time of ECG acquisition.
+	//
+	// Can be represented as a number (years) or other format.
+	//
+	// XML Tag: <Age>...</Age>
+	// Cardinality: Optional
+	Age *string `xml:"Age"`
+
+	// Paced indicates whether the patient has a cardiac pacemaker.
+	//
+	// True if the patient is paced, false otherwise.
+	//
+	// Example: true
+	//
+	// XML Tag: <Paced>...</Paced>
+	// Cardinality: Optional
+	Paced *bool `xml:"Paced"`
+
+	// Medications contains the list of medications the patient is taking.
+	//
+	// Each medication can include name, dosage, etc.
+	//
+	// XML Tag: <Medications>...</Medications>
+	// Cardinality: Optional
+	Medications Medications `xml:"Medications"`
+
+	// ClinicalClassifications contains clinical classification information.
+	//
+	// Used to categorize the patient's clinical status or conditions.
+	//
+	// XML Tag: <ClinicalClassifications>...</ClinicalClassifications>
+	// Cardinality: Optional
+	ClinicalClassifications ClinicalClassifications `xml:"ClinicalClassifications"`
+
+	// Bed is the patient's bed location within the facility.
+	//
+	// Example: "12A"
+	//
+	// XML Tag: <Bed>...</Bed>
+	// Cardinality: Optional
+	Bed string `xml:"Bed"`
+
+	// Room is the patient's room number or identifier.
+	//
+	// Example: "302"
+	//
+	// XML Tag: <Room>...</Room>
+	// Cardinality: Optional
+	Room string `xml:"Room"`
+
+	// PointOfCare identifies the care unit or department.
+	//
+	// Example: "Cardiology ICU", "Emergency Department"
+	//
+	// XML Tag: <PointOfCare>...</PointOfCare>
+	// Cardinality: Optional
+	PointOfCare string `xml:"PointOfCare"`
+}
+
+// Medications represents a list of medications the patient is taking.
+//
+// XML Structure:
+//
+//	<Medications>
+//	  <Medication>Aspirin</Medication>
+//	  <Medication>Metoprolol</Medication>
+//	</Medications>
+//
+// Cardinality: Optional (within SubjectDemographicPerson)
+type Medications struct {
+	// Medication is a list of individual medications.
+	//
+	// Each entry can be a medication name, dosage information, or structured data.
+	//
+	// XML Tag: <Medication>...</Medication>
+	// Cardinality: 0..* (multiple medications allowed)
+	Medication []string `xml:"Medication,omitempty"`
+}
+
+// ClinicalClassifications represents clinical classification information.
+//
+// Used to categorize the patient's clinical status, conditions, or diagnoses.
+//
+// XML Structure:
+//
+//	<ClinicalClassifications>
+//	  <ClinicalClassification>Hypertension</ClinicalClassification>
+//	  <ClinicalClassification>Diabetes Type 2</ClinicalClassification>
+//	</ClinicalClassifications>
+//
+// Cardinality: Optional (within SubjectDemographicPerson)
+type ClinicalClassifications struct {
+	// ClinicalClassification is a list of clinical classifications.
+	//
+	// Each entry represents a clinical category, diagnosis, or classification.
+	//
+	// XML Tag: <ClinicalClassification>...</ClinicalClassification>
+	// Cardinality: 0..* (multiple classifications allowed)
+	ClinicalClassification []string `xml:"ClinicalClassification,omitempty"`
 }
