@@ -144,7 +144,7 @@ func TestSetEffectiveTime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
-			result := h.SetEffectiveTime(tt.low, tt.high)
+			result := h.SetEffectiveTime(tt.low, tt.high, true, false)
 
 			if result == nil {
 				t.Errorf("SetEffectiveTime() returned nil")
@@ -410,7 +410,7 @@ func TestFluentAPI(t *testing.T) {
 	h := NewHl7xml("/tmp/test").
 		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "").
 		SetText("Test ECG").
-		SetEffectiveTime("20231223120000", "20231223120010").
+		SetEffectiveTime("20231223120000", "20231223120010", true, false).
 		SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED).
 		SetSubjectDemographics("JDO", "PAT-001", types.GENDER_MALE, "19800101", types.RACE_WHITE)
 
@@ -730,4 +730,3 @@ func TestAddSecondaryPerformer_NoSeries(t *testing.T) {
 		t.Error("Should not have any components")
 	}
 }
-
