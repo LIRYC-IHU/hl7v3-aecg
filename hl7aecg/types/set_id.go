@@ -27,12 +27,16 @@ var (
 // Note: No automatic UUID generation. The caller must provide a valid ID.
 //
 // Examples:
-//   ID.SetID("", "myExtension")                    // Uses singleton root + "myExtension"
-//   ID.SetID("", "", "clinicalTrial")              // Uses singleton root + default "clinicalTrial"
-//   ID.SetID("2.16.840...", "custom")              // Uses provided root + "custom"
-//   ID.SetID("2.16.840...", "", "default")         // Uses provided root + "default"
+//
+//	ID.SetID("", "myExtension")                    // Uses singleton root + "myExtension"
+//	ID.SetID("", "", "clinicalTrial")              // Uses singleton root + default "clinicalTrial"
+//	ID.SetID("2.16.840...", "custom")              // Uses provided root + "custom"
+//	ID.SetID("2.16.840...", "", "default")         // Uses provided root + "default"
 func (i *ID) SetID(id, extension string, defaultExtension ...string) {
 	// Set root ID
+	if i == nil {
+		i = &ID{}
+	}
 	if id == "" {
 		if instanceID != nil {
 			i.Root = instanceID.ID
