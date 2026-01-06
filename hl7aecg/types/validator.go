@@ -44,8 +44,8 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 		// Validate Subject within ComponentOf
 		sa.Subject.Validate(ctx, vctx)
 
-		// Validate ClinicalTrial within ComponentOf (optional validation)
-		// sa.ComponentOf.ClinicalTrial.Validate(ctx, vctx)
+		// Validate ClinicalTrial within ComponentOf
+		sa.ComponentOf.ClinicalTrial.Validate(ctx, vctx)
 	} else {
 		vctx.AddError(ErrMissingSubject)
 	}
@@ -54,9 +54,14 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 }
 
 func (id *ID) Validate(ctx context.Context, vctx *ValidationContext) error {
+	// Autocomplete empty Root with singleton if available
 	if id.Root == "" {
-		vctx.AddError(ErrMissingID)
-		return nil
+		if instanceID != nil && instanceID.ID != "" {
+			id.Root = instanceID.ID
+		} else {
+			vctx.AddError(ErrMissingID)
+			return nil
+		}
 	}
 	// Accept any non-empty Root value (OID, custom identifier, etc.)
 	// No specific format validation required
@@ -105,9 +110,4 @@ func isValidTimestamp(s string) bool {
 	}
 
 	return false
-}
-
-func (ct *ClinicalTrial) Validate(ctx context.Context, vctx *ValidationContext) error {
-	ct.ID.Validate(ctx, vctx)
-	return nil
 }

@@ -22,20 +22,30 @@ var (
 // Parameters:
 //   - id: The root ID value (OID or custom identifier)
 //   - extension: Optional extension to the ID
+//   - defaultExtension: (optional) Default extension to use if extension is empty
 //
 // Note: No automatic UUID generation. The caller must provide a valid ID.
-
-func (i *ID) SetID(id, extension string) {
+//
+// Examples:
+//   ID.SetID("", "myExtension")                    // Uses singleton root + "myExtension"
+//   ID.SetID("", "", "clinicalTrial")              // Uses singleton root + default "clinicalTrial"
+//   ID.SetID("2.16.840...", "custom")              // Uses provided root + "custom"
+//   ID.SetID("2.16.840...", "", "default")         // Uses provided root + "default"
+func (i *ID) SetID(id, extension string, defaultExtension ...string) {
+	// Set root ID
 	if id == "" {
 		if instanceID != nil {
 			i.Root = instanceID.ID
 		}
 	} else {
 		i.Root = id
-
 	}
+
+	// Set extension with fallback to default
 	if extension != "" {
 		i.Extension = extension
+	} else if len(defaultExtension) > 0 && defaultExtension[0] != "" {
+		i.Extension = defaultExtension[0]
 	}
 }
 

@@ -436,3 +436,174 @@ func TestFluentAPI(t *testing.T) {
 		}
 	}
 }
+
+// TestSetResponsibleParty tests the SetResponsibleParty method
+func TestSetResponsibleParty(t *testing.T) {
+	tests := []struct {
+		name              string
+		investigatorRoot  string
+		investigatorID    string
+		prefix            string
+		given             string
+		family            string
+		suffix            string
+		wantEmptyName     bool
+		wantNameWithValue bool
+	}{
+		{
+			name:              "Set responsible party with full name",
+			investigatorRoot:  "2.16.840.1.113883.3.6",
+			investigatorID:    "INV_001",
+			prefix:            "Dr.",
+			given:             "John",
+			family:            "Smith",
+			suffix:            "MD",
+			wantEmptyName:     false,
+			wantNameWithValue: true,
+		},
+		{
+			name:              "Set responsible party with empty name",
+			investigatorRoot:  "",
+			investigatorID:    "trialInvestigator",
+			prefix:            "",
+			given:             "",
+			family:            "",
+			suffix:            "",
+			wantEmptyName:     true,
+			wantNameWithValue: false,
+		},
+		{
+			name:              "Set responsible party with partial name",
+			investigatorRoot:  "2.16.840.1.113883.3.6",
+			investigatorID:    "INV_002",
+			prefix:            "",
+			given:             "Jane",
+			family:            "Doe",
+			suffix:            "",
+			wantEmptyName:     false,
+			wantNameWithValue: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHl7xml("/tmp/test").
+				Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
+				SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED)
+
+			result := h.SetResponsibleParty(tt.investigatorRoot, tt.investigatorID, tt.prefix, tt.given, tt.family, tt.suffix)
+
+			if result == nil {
+				t.Errorf("SetResponsibleParty() returned nil")
+				return
+			}
+
+			// Check that ComponentOf exists
+			if h.HL7AEcg.ComponentOf == nil {
+				t.Errorf("SetResponsibleParty() did not initialize ComponentOf")
+				return
+			}
+
+			// Navigate to ResponsibleParty
+			clinicalTrial := &h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.ComponentOf.ClinicalTrial
+			if clinicalTrial.Location == nil {
+				t.Errorf("SetResponsibleParty() did not initialize Location")
+				return
+			}
+
+			rp := clinicalTrial.Location.TrialSite.ResponsibleParty
+			if rp == nil {
+				t.Errorf("SetResponsibleParty() did not set ResponsibleParty")
+				return
+			}
+
+			// Check investigator ID extension
+			if rp.TrialInvestigator.ID.Extension != tt.investigatorID {
+				t.Errorf("InvestigatorID Extension = %v, want %v", rp.TrialInvestigator.ID.Extension, tt.investigatorID)
+			}
+
+			// Check investigator ID root (when provided)
+			if tt.investigatorRoot != "" && rp.TrialInvestigator.ID.Root != tt.investigatorRoot {
+				t.Errorf("InvestigatorID Root = %v, want %v", rp.TrialInvestigator.ID.Root, tt.investigatorRoot)
+			}
+
+			// Check InvestigatorPerson and Name
+			if rp.TrialInvestigator.InvestigatorPerson == nil {
+				t.Errorf("SetResponsibleParty() did not initialize InvestigatorPerson")
+				return
+			}
+
+			if rp.TrialInvestigator.InvestigatorPerson.Name == nil {
+				t.Errorf("SetResponsibleParty() did not initialize Name")
+				return
+			}
+
+			name := rp.TrialInvestigator.InvestigatorPerson.Name
+
+			if tt.wantEmptyName {
+				// All components should be nil for empty name
+				if name.Prefix != nil || name.Given != nil || name.Family != nil || name.Suffix != nil {
+					t.Errorf("Name should be empty but has values")
+				}
+			}
+
+			if tt.wantNameWithValue {
+				if tt.prefix != "" && (name.Prefix == nil || *name.Prefix != tt.prefix) {
+					t.Errorf("Name.Prefix = %v, want %v", name.Prefix, tt.prefix)
+				}
+				if tt.given != "" && (name.Given == nil || *name.Given != tt.given) {
+					t.Errorf("Name.Given = %v, want %v", name.Given, tt.given)
+				}
+				if tt.family != "" && (name.Family == nil || *name.Family != tt.family) {
+					t.Errorf("Name.Family = %v, want %v", name.Family, tt.family)
+				}
+				if tt.suffix != "" && (name.Suffix == nil || *name.Suffix != tt.suffix) {
+					t.Errorf("Name.Suffix = %v, want %v", name.Suffix, tt.suffix)
+				}
+			}
+		})
+	}
+}
+
+// TestSetResponsibleParty_MethodChaining tests method chaining with SetResponsibleParty
+func TestSetResponsibleParty_MethodChaining(t *testing.T) {
+	h := NewHl7xml("/tmp/test").
+		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
+		SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED).
+		SetLocation("SITE_001", "2.16.840.1.113883.3.5", "Test Site", "Boston", "MA", "USA").
+		SetResponsibleParty("", "INV_001", "Dr.", "John", "Smith", "MD")
+
+	if h == nil {
+		t.Fatal("Method chaining returned nil")
+	}
+
+	// Verify Location and ResponsibleParty are both set
+	if h.HL7AEcg.ComponentOf == nil {
+		t.Fatal("ComponentOf not initialized")
+	}
+
+	clinicalTrial := &h.HL7AEcg.ComponentOf.TimepointEvent.ComponentOf.SubjectAssignment.ComponentOf.ClinicalTrial
+	if clinicalTrial.Location == nil {
+		t.Fatal("Location not set")
+	}
+
+	// Check Location
+	if clinicalTrial.Location.TrialSite.Location == nil || clinicalTrial.Location.TrialSite.Location.Name == nil {
+		t.Error("Location name not set")
+	}
+
+	// Check ResponsibleParty
+	if clinicalTrial.Location.TrialSite.ResponsibleParty == nil {
+		t.Error("ResponsibleParty not set")
+	}
+
+	rp := clinicalTrial.Location.TrialSite.ResponsibleParty
+	if rp.TrialInvestigator.ID.Extension != "INV_001" {
+		t.Errorf("Investigator ID not set correctly: %v", rp.TrialInvestigator.ID.Extension)
+	}
+
+	if rp.TrialInvestigator.InvestigatorPerson == nil || rp.TrialInvestigator.InvestigatorPerson.Name == nil {
+		t.Error("Investigator name not initialized")
+	}
+}
+

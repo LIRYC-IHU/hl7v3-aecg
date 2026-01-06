@@ -2,11 +2,22 @@ package types
 
 import (
 	"context"
+	"sync"
 	"testing"
 )
 
 // TestSubject_Validate tests Subject validation
 func TestSubject_Validate(t *testing.T) {
+	// Reset singleton to ensure empty IDs produce errors
+	savedInstance := instanceID
+	savedOnce := once
+	instanceID = nil
+	once = *new(sync.Once)
+	defer func() {
+		instanceID = savedInstance
+		once = savedOnce
+	}()
+
 	tests := []struct {
 		name      string
 		subject   Subject
@@ -100,6 +111,16 @@ func TestSubject_Validate(t *testing.T) {
 
 // TestTrialSubject_Validate tests TrialSubject validation
 func TestTrialSubject_Validate(t *testing.T) {
+	// Reset singleton to ensure empty IDs produce errors
+	savedInstance := instanceID
+	savedOnce := once
+	instanceID = nil
+	once = *new(sync.Once)
+	defer func() {
+		instanceID = savedInstance
+		once = savedOnce
+	}()
+
 	tests := []struct {
 		name          string
 		trialSubject  TrialSubject
@@ -338,6 +359,16 @@ func TestSubjectAssignment_Validate(t *testing.T) {
 
 // TestComponentOfClinicalTrial_Validate tests ComponentOfClinicalTrial validation
 func TestComponentOfClinicalTrial_Validate(t *testing.T) {
+	// Reset singleton to ensure empty IDs produce errors
+	savedInstance := instanceID
+	savedOnce := once
+	instanceID = nil
+	once = *new(sync.Once)
+	defer func() {
+		instanceID = savedInstance
+		once = savedOnce
+	}()
+
 	tests := []struct {
 		name      string
 		component ComponentOfClinicalTrial

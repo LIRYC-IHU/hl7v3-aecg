@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -96,6 +97,16 @@ func TestValidationContext_GetError(t *testing.T) {
 
 // TestID_Validate tests ID validation
 func TestID_Validate(t *testing.T) {
+	// Reset singleton to ensure empty IDs produce errors
+	savedInstance := instanceID
+	savedOnce := once
+	instanceID = nil
+	once = *new(sync.Once)
+	defer func() {
+		instanceID = savedInstance
+		once = savedOnce
+	}()
+
 	tests := []struct {
 		name      string
 		id        ID
@@ -717,6 +728,16 @@ func TestHL7AEcg_Validate(t *testing.T) {
 
 // TestClinicalTrial_Validate tests clinical trial validation
 func TestClinicalTrial_Validate(t *testing.T) {
+	// Reset singleton to ensure empty IDs produce errors
+	savedInstance := instanceID
+	savedOnce := once
+	instanceID = nil
+	once = *new(sync.Once)
+	defer func() {
+		instanceID = savedInstance
+		once = savedOnce
+	}()
+
 	tests := []struct {
 		name      string
 		trial     ClinicalTrial
