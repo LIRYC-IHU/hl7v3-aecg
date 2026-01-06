@@ -65,7 +65,7 @@ func TestSeries_Validate(t *testing.T) {
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{
 						ID: &ID{Root: "2.16.840.1.113883.3.1234.5", Extension: "ECG-001"},
 					},
-				},
+				}},
 			},
 			wantError: nil,
 		},
@@ -455,7 +455,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 						ID:   &ID{Root: "1.3.6.1.4.1.57054"},
 						Name: stringPtr("CardioTech Medical Devices Inc."),
 					},
-				},
+				}},
 			},
 			wantError: nil,
 		},
@@ -473,7 +473,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{
 						ID: &ID{Root: ""},
 					},
-				},
+				}},
 			},
 			wantError: ErrMissingID,
 		},
@@ -492,7 +492,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 					ManufacturerOrganization: &ManufacturerOrganization{
 						ID: &ID{Root: ""},
 					},
-				},
+				}},
 			},
 			wantError: ErrMissingID,
 		},
