@@ -505,13 +505,13 @@ func TestTime_XMLMarshal(t *testing.T) {
 	}{
 		{
 			name:    "Time with HL7 timestamp",
-			time:    Time{Value: "20231223120000"},
-			wantXML: `<Time value="20231223120000"></Time>`,
+			time:    Time{Value: "20231223120000", Inclusive: true},
+			wantXML: `<Time value="20231223120000" inclusive="true"></Time>`,
 		},
 		{
 			name:    "Time with milliseconds",
-			time:    Time{Value: "20231223120000.123"},
-			wantXML: `<Time value="20231223120000.123"></Time>`,
+			time:    Time{Value: "20231223120000.123", Inclusive: false},
+			wantXML: `<Time value="20231223120000.123" inclusive="false"></Time>`,
 		},
 	}
 

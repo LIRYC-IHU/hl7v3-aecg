@@ -15,8 +15,7 @@ func (ct *ClinicalTrial) Validate(ctx context.Context, vctx *ValidationContext) 
 	ct.ID.Validate(ctx, vctx)
 
 	// ActivityTime is optional but must be valid if present
-	// Note: ActivityTime is not a pointer, so we check if it has values
-	if ct.ActivityTime.Low.Value != "" || ct.ActivityTime.High.Value != "" {
+	if ct.ActivityTime != nil && (ct.ActivityTime.Low.Value != "" || ct.ActivityTime.High.Value != "") {
 		ct.ActivityTime.Validate(ctx, vctx)
 	}
 

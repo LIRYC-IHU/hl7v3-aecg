@@ -181,20 +181,22 @@ func (h *Hl7xml) SetSeriesAuthor(
 	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
 
 	// buildLeadSequence creates a sequence for a single lead.
-	lastComponent.Series.Author = &types.SeriesAuthor{
-		ID: &types.ID{Root: deviceID},
-		ManufacturedSeriesDevice: types.ManufacturedSeriesDevice{
-			ID: &types.ID{
-				Root:      manufacturerID,
-				Extension: deviceID,
+	lastComponent.Series.Author = &types.Author{
+		SeriesAuthor: types.SeriesAuthor{
+			ID: &types.ID{Root: deviceID},
+			ManufacturedSeriesDevice: types.ManufacturedSeriesDevice{
+				ID: &types.ID{
+					Root:      manufacturerID,
+					Extension: deviceID,
+				},
+				Code:                  types.NewCode(deviceType, types.CodeSystemOID(""), "", ""),
+				ManufacturerModelName: &modelName,
+				SoftwareName:          &softwareName,
 			},
-			Code:                  types.NewCode(deviceType, types.CodeSystemOID(""), "", ""),
-			ManufacturerModelName: &modelName,
-			SoftwareName:          &softwareName,
-		},
-		ManufacturerOrganization: &types.ManufacturerOrganization{
-			ID:   &types.ID{Root: manufacturerID},
-			Name: &manufacturerName,
+			ManufacturerOrganization: &types.ManufacturerOrganization{
+				ID:   &types.ID{Root: manufacturerID},
+				Name: &manufacturerName,
+			},
 		},
 	}
 

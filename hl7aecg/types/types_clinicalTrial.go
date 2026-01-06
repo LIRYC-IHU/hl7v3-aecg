@@ -83,7 +83,7 @@ type ClinicalTrial struct {
 	//
 	// XML Tag: <activityTime>...</activityTime>
 	// Cardinality: Optional
-	ActivityTime EffectiveTime `xml:"activityTime"`
+	ActivityTime *EffectiveTime `xml:"activityTime"`
 
 	// Location identifies the trial site location where ECG waveforms were acquired.
 	//

@@ -96,7 +96,7 @@ type Series struct {
 	//
 	// XML Tag: <author>...</author>
 	// Cardinality: Optional
-	Author *SeriesAuthor `xml:"author,omitempty"`
+	Author *Author `xml:"author,omitempty"`
 
 	// SecondaryPerformer describes technician(s) operating the device.
 	//
@@ -141,6 +141,23 @@ func NewSeries() *Series {
 		ID:   &ID{},
 		Code: &Code[SeriesTypeCode, CodeSystemOID]{},
 	}
+}
+
+// Author wraps the SeriesAuthor to provide the correct XML structure.
+//
+// XML Structure:
+//
+//	<author>
+//	  <seriesAuthor>...</seriesAuthor>
+//	</author>
+//
+// Cardinality: Optional (within Series)
+type Author struct {
+	// SeriesAuthor contains the device and manufacturer information.
+	//
+	// XML Tag: <seriesAuthor>...</seriesAuthor>
+	// Cardinality: Required (within Author)
+	SeriesAuthor SeriesAuthor `xml:"seriesAuthor"`
 }
 
 // SeriesAuthor describes the device that authored (recorded) the series waveforms.
@@ -248,6 +265,13 @@ type ManufacturedSeriesDevice struct {
 	// XML Tag: <manufacturerModelName>...</manufacturerModelName>
 	// Cardinality: Optional
 	ManufacturerModelName *string `xml:"manufacturerModelName,omitempty"`
+
+	// SerialNumber is the serial number of the device.
+	// Example: "SN234-AR9-102993"
+	//
+	// XML Tag: <SerialNumber>...</SerialNumber>
+	// Cardinality: Optional
+	SerialNumber *string `xml:"SerialNumber,omitempty"`
 
 	// SoftwareName is the name and/or version of the software in the device.
 	//

@@ -420,7 +420,7 @@ func TestClinicalTrial_Validate_WithLocation(t *testing.T) {
 			name: "Valid trial with activity time",
 			clinicalTrial: ClinicalTrial{
 				ID: ID{Root: "2.16.840.1.113883.3.4"},
-				ActivityTime: EffectiveTime{
+				ActivityTime: &EffectiveTime{
 					Low:  Time{Value: "20010509"},
 					High: Time{Value: "20020316"},
 				},
@@ -431,7 +431,7 @@ func TestClinicalTrial_Validate_WithLocation(t *testing.T) {
 			name: "Invalid - bad activity time format",
 			clinicalTrial: ClinicalTrial{
 				ID: ID{Root: "2.16.840.1.113883.3.4"},
-				ActivityTime: EffectiveTime{
+				ActivityTime: &EffectiveTime{
 					Low: Time{Value: "invalid-date"},
 				},
 			},

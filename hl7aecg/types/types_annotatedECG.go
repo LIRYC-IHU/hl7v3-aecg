@@ -409,16 +409,17 @@ type EffectiveTime struct {
 	High Time `xml:"high"`
 }
 
-func NewEffectiveTime(low, high string) *EffectiveTime {
+func NewEffectiveTime(low, high string, low_inclusive, high_inclusive bool) *EffectiveTime {
 	return &EffectiveTime{
-		Low:  Time{Value: low},
-		High: Time{Value: high},
+		Low:  Time{Value: low, Inclusive: low_inclusive},
+		High: Time{Value: high, Inclusive: high_inclusive},
 	}
 }
 
 // Time represents an HL7 Timestamp (TS datatype).
 type Time struct {
-	Value string `xml:"value,attr"`
+	Value     string `xml:"value,attr"`
+	Inclusive bool   `xml:"inclusive,attr"`
 }
 
 // ComponentOfTimepointEvent links the AnnotatedECG to a TimepointEvent.

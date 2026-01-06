@@ -11,8 +11,8 @@ func (h *Hl7xml) SetText(text string) *Hl7xml {
 }
 
 // SetEffectiveTime sets the EffectiveTime field of the HL7AEcg instance.
-func (h *Hl7xml) SetEffectiveTime(low, high string) *Hl7xml {
-	h.HL7AEcg.EffectiveTime = types.NewEffectiveTime(low, high)
+func (h *Hl7xml) SetEffectiveTime(low, high string, low_inclusive, high_inclusive bool) *Hl7xml {
+	h.HL7AEcg.EffectiveTime = types.NewEffectiveTime(low, high, low_inclusive, high_inclusive)
 	return h
 }
 
@@ -125,4 +125,3 @@ func (h *Hl7xml) SetResponsibleParty(investigatorRoot, investigatorID, prefix, g
 
 	return h
 }
-

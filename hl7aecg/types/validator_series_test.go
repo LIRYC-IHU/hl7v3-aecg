@@ -61,7 +61,7 @@ func TestSeries_Validate(t *testing.T) {
 				EffectiveTime: EffectiveTime{
 					Low: Time{Value: "20021122091000"},
 				},
-				Author: &SeriesAuthor{
+				Author: &Author{SeriesAuthor: SeriesAuthor{
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{
 						ID: &ID{Root: "2.16.840.1.113883.3.1234.5", Extension: "ECG-001"},
 					},
@@ -440,7 +440,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 					Low:  Time{Value: "20021122091000"},
 					High: Time{Value: "20021122091010"},
 				},
-				Author: &SeriesAuthor{
+				Author: &Author{SeriesAuthor: SeriesAuthor{
 					ID: &ID{Root: "2.16.840.1.113883.3.5", Extension: "45"},
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{
 						ID: &ID{Root: "1.3.6.1.4.1.57054", Extension: "SN234-AR9-102993"},
@@ -469,7 +469,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 				EffectiveTime: EffectiveTime{
 					Low: Time{Value: "20021122091000"},
 				},
-				Author: &SeriesAuthor{
+				Author: &Author{SeriesAuthor: SeriesAuthor{
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{
 						ID: &ID{Root: ""},
 					},
@@ -487,7 +487,7 @@ func TestSeries_Validate_WithCompleteAuthor(t *testing.T) {
 				EffectiveTime: EffectiveTime{
 					Low: Time{Value: "20021122091000"},
 				},
-				Author: &SeriesAuthor{
+				Author: &Author{SeriesAuthor: SeriesAuthor{
 					ManufacturedSeriesDevice: ManufacturedSeriesDevice{},
 					ManufacturerOrganization: &ManufacturerOrganization{
 						ID: &ID{Root: ""},

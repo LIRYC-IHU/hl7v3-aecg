@@ -8,7 +8,6 @@ import (
 // Validate validates the Series structure.
 // Validates Code (required), EffectiveTime (required), ID (optional), and Author (optional).
 func (s *Series) Validate(ctx context.Context, vctx *ValidationContext) error {
-	fmt.Println("Validating Series")
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -52,6 +51,23 @@ func (s *Series) Validate(ctx context.Context, vctx *ValidationContext) error {
 	}
 
 	// TODO: Component (SequenceSet) validation if needed
+
+	return nil
+}
+
+// Validate validates the Author structure.
+// Validates SeriesAuthor (required).
+func (a *Author) Validate(ctx context.Context, vctx *ValidationContext) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	// SeriesAuthor is required
+	if err := a.SeriesAuthor.Validate(ctx, vctx); err != nil {
+		return err
+	}
 
 	return nil
 }
