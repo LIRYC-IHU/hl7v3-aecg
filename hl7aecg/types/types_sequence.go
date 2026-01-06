@@ -318,17 +318,23 @@ type SLIST_PQ struct {
 
 // PhysicalQuantity represents a physical measurement with value and unit.
 //
-// Used for origin and scale in SLIST_PQ.
+// Used for origin and scale in SLIST_PQ, and for observation values in ControlVariable.
 //
-// Cardinality: Required (in SLIST_PQ context)
+// Cardinality: Required (in SLIST_PQ context), Optional (in ControlVariable context)
 type PhysicalQuantity struct {
+	// XsiType specifies the type as "PQ" for Physical Quantity.
+	//
+	// XML Tag: xsi:type="PQ"
+	// Cardinality: Optional (used in ControlVariable context)
+	XsiType string `xml:"xsi:type,attr,omitempty"`
+
 	// Value is the numeric value.
 	//
-	// Example: "0", "5", "2.5"
+	// Example: "0", "5", "2.5", "34"
 	//
 	// XML Tag: value="..."
-	// Cardinality: Required
-	Value string `xml:"value,attr"`
+	// Cardinality: Required in SLIST_PQ, Optional elsewhere
+	Value string `xml:"value,attr,omitempty"`
 
 	// Unit is the unit of measurement.
 	//
@@ -337,9 +343,15 @@ type PhysicalQuantity struct {
 	//   - "mV": millivolts
 	//   - "V": volts
 	//
+	// Common age/time units:
+	//   - "a" or "yr": years
+	//   - "mo": months
+	//   - "d": days
+	//   - "h": hours
+	//
 	// XML Tag: unit="..."
-	// Cardinality: Required
-	Unit string `xml:"unit,attr"`
+	// Cardinality: Required in SLIST_PQ, Optional elsewhere
+	Unit string `xml:"unit,attr,omitempty"`
 }
 
 // GetDigits parses the Digits string into a slice of integers.

@@ -118,6 +118,17 @@ type Series struct {
 	// Cardinality: Optional
 	Support *SeriesSupport `xml:"support,omitempty"`
 
+	// ControlVariable captures related information about the subject or ECG collection conditions.
+	//
+	// Control variables can capture information such as:
+	//   - Subject's age (independent of birth date recorded elsewhere)
+	//   - Fasting status
+	//   - Other clinical information relevant to ECG interpretation
+	//
+	// XML Tag: <controlVariable>...</controlVariable>
+	// Cardinality: Optional (0..*)
+	ControlVariable []ControlVariable `xml:"controlVariable,omitempty"`
+
 	// Component contains the sequence sets with actual waveform data.
 	//
 	// XML Tag: <component>...</component>

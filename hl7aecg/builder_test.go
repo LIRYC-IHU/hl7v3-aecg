@@ -607,3 +607,127 @@ func TestSetResponsibleParty_MethodChaining(t *testing.T) {
 	}
 }
 
+// TestAddSecondaryPerformer tests adding a secondary performer to a series
+func TestAddSecondaryPerformer(t *testing.T) {
+	h := NewHl7xml("/tmp")
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "")
+
+	// Add a series first
+	leads := map[types.LeadCode][]int{
+		types.MDC_ECG_LEAD_I: {1, 2, 3},
+	}
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+
+	// Add secondary performer
+	h.AddSecondaryPerformer(types.PERFORMER_ECG_TECHNICIAN, "", "", "")
+
+	// Verify secondary performer was added
+	if len(h.HL7AEcg.Component) == 0 {
+		t.Fatal("No components in document")
+	}
+
+	series := &h.HL7AEcg.Component[0].Series
+	if len(series.SecondaryPerformer) == 0 {
+		t.Fatal("No secondary performers added")
+	}
+
+	performer := series.SecondaryPerformer[0]
+	if performer.FunctionCode == nil {
+		t.Error("FunctionCode should be set")
+	} else if performer.FunctionCode.Code != types.PERFORMER_ECG_TECHNICIAN {
+		t.Errorf("FunctionCode = %v, want %v", performer.FunctionCode.Code, types.PERFORMER_ECG_TECHNICIAN)
+	}
+
+	if performer.SeriesPerformer.AssignedPerson == nil {
+		t.Error("AssignedPerson should be set")
+	} else if performer.SeriesPerformer.AssignedPerson.Name == nil {
+		t.Error("Name should be set")
+	} else if *performer.SeriesPerformer.AssignedPerson.Name != "" {
+		t.Errorf("Name = %v, want empty string", *performer.SeriesPerformer.AssignedPerson.Name)
+	}
+}
+
+// TestAddSecondaryPerformer_WithDetails tests adding a secondary performer with full details
+func TestAddSecondaryPerformer_WithDetails(t *testing.T) {
+	h := NewHl7xml("/tmp")
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "")
+
+	// Add a series first
+	leads := map[types.LeadCode][]int{
+		types.MDC_ECG_LEAD_I: {1, 2, 3},
+	}
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+
+	// Add secondary performer with details
+	h.AddSecondaryPerformer(types.PERFORMER_HOLTER_ANALYST, "2.16.840.1.113883.3.4", "TECH-221", "KAB")
+
+	// Verify
+	performer := h.HL7AEcg.Component[0].Series.SecondaryPerformer[0]
+
+	if performer.FunctionCode.Code != types.PERFORMER_HOLTER_ANALYST {
+		t.Errorf("FunctionCode = %v, want %v", performer.FunctionCode.Code, types.PERFORMER_HOLTER_ANALYST)
+	}
+
+	if performer.SeriesPerformer.ID == nil {
+		t.Fatal("Performer ID should be set")
+	}
+
+	if performer.SeriesPerformer.ID.Root != "2.16.840.1.113883.3.4" {
+		t.Errorf("Performer ID Root = %v, want %v", performer.SeriesPerformer.ID.Root, "2.16.840.1.113883.3.4")
+	}
+
+	if performer.SeriesPerformer.ID.Extension != "TECH-221" {
+		t.Errorf("Performer ID Extension = %v, want %v", performer.SeriesPerformer.ID.Extension, "TECH-221")
+	}
+
+	if *performer.SeriesPerformer.AssignedPerson.Name != "KAB" {
+		t.Errorf("Performer Name = %v, want %v", *performer.SeriesPerformer.AssignedPerson.Name, "KAB")
+	}
+}
+
+// TestAddSecondaryPerformer_MultiplePerformers tests adding multiple performers to a series
+func TestAddSecondaryPerformer_MultiplePerformers(t *testing.T) {
+	h := NewHl7xml("/tmp")
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "")
+
+	// Add a series first
+	leads := map[types.LeadCode][]int{
+		types.MDC_ECG_LEAD_I: {1, 2, 3},
+	}
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+
+	// Add multiple secondary performers
+	h.AddSecondaryPerformer(types.PERFORMER_HOLTER_HOOKUP, "", "", "Tech1").
+		AddSecondaryPerformer(types.PERFORMER_HOLTER_ANALYST, "", "", "Analyst1")
+
+	// Verify
+	series := &h.HL7AEcg.Component[0].Series
+	if len(series.SecondaryPerformer) != 2 {
+		t.Fatalf("Expected 2 secondary performers, got %d", len(series.SecondaryPerformer))
+	}
+
+	// Check first performer
+	if series.SecondaryPerformer[0].FunctionCode.Code != types.PERFORMER_HOLTER_HOOKUP {
+		t.Errorf("First performer function code = %v, want %v", series.SecondaryPerformer[0].FunctionCode.Code, types.PERFORMER_HOLTER_HOOKUP)
+	}
+
+	// Check second performer
+	if series.SecondaryPerformer[1].FunctionCode.Code != types.PERFORMER_HOLTER_ANALYST {
+		t.Errorf("Second performer function code = %v, want %v", series.SecondaryPerformer[1].FunctionCode.Code, types.PERFORMER_HOLTER_ANALYST)
+	}
+}
+
+// TestAddSecondaryPerformer_NoSeries tests that adding performer without series doesn't crash
+func TestAddSecondaryPerformer_NoSeries(t *testing.T) {
+	h := NewHl7xml("/tmp")
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "")
+
+	// Try to add secondary performer without a series - should not crash
+	h.AddSecondaryPerformer(types.PERFORMER_ECG_TECHNICIAN, "", "", "")
+
+	// Document should still be valid, just no performers added
+	if len(h.HL7AEcg.Component) > 0 {
+		t.Error("Should not have any components")
+	}
+}
+

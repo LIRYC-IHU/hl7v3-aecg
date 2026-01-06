@@ -201,6 +201,179 @@ func (h *Hl7xml) SetSeriesAuthor(
 	return h
 }
 
+// AddSecondaryPerformer adds a secondary performer (technician) to the most recently added series.
+//
+// The secondary performer describes the technician who operated the device
+// that captured the ECG waveforms.
+//
+// Parameters:
+//   - functionCode: The function the technician was performing (e.g., PERFORMER_ECG_TECHNICIAN)
+//   - performerID: Optional role-specific identifier root for the technician
+//   - performerExtension: Optional role-specific identifier extension
+//   - name: The technician's name (empty string for <name/> element, or actual name)
+//
+// Example:
+//
+//	h.AddRhythmSeries(...).
+//	  AddSecondaryPerformer(types.PERFORMER_ECG_TECHNICIAN, "", "", "")
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddSecondaryPerformer(
+	functionCode types.PerformerFunctionCode,
+	performerID string,
+	performerExtension string,
+	name string,
+) *Hl7xml {
+	if len(h.HL7AEcg.Component) == 0 {
+		return h
+	}
+
+	// Apply to the most recently added series
+	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
+
+	// Create secondary performer
+	performer := types.SecondaryPerformer{
+		SeriesPerformer: types.SeriesPerformer{},
+	}
+
+	// Set function code
+	if functionCode != "" {
+		performer.SetFunctionCode(functionCode, types.CodeSystemOID(""), "", "")
+	}
+
+	// Set performer details
+	performer.SeriesPerformer.SetPerformer(performerID, performerExtension, name)
+
+	// Add to series
+	lastComponent.Series.SecondaryPerformer = append(lastComponent.Series.SecondaryPerformer, performer)
+
+	return h
+}
+
+// AddControlVariable adds a control variable (observation) to the most recently added series.
+//
+// Control variables capture related information about the subject or ECG collection conditions,
+// such as the subject's age, fasting status, or other clinical information.
+//
+// Parameters:
+//   - observationCode: The observation code (e.g., "21612-7" for "Reported Age")
+//   - codeSystem: The code system OID (e.g., types.LOINC_OID)
+//   - displayName: Display name for the code (e.g., "Reported Age")
+//   - value: The observed value (e.g., "34")
+//   - unit: The unit of measurement (e.g., "a" for years)
+//
+// Example:
+//
+//	h.AddRhythmSeries(...).
+//	  AddControlVariable("21612-7", types.LOINC_OID, "Reported Age", "34", "a")
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddControlVariable(
+	observationCode string,
+	codeSystem types.CodeSystemOID,
+	displayName string,
+	value string,
+	unit string,
+) *Hl7xml {
+	if len(h.HL7AEcg.Component) == 0 {
+		return h
+	}
+
+	// Apply to the most recently added series
+	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
+
+	// Create control variable
+	controlVar := types.ControlVariable{
+		RelatedObservation: types.RelatedObservation{},
+	}
+
+	// Set observation code
+	controlVar.RelatedObservation.SetObservationCode(observationCode, codeSystem, displayName, "LOINC")
+
+	// Set value
+	if value != "" {
+		controlVar.RelatedObservation.SetValue(value, unit)
+	}
+
+	// Add to series
+	lastComponent.Series.ControlVariable = append(lastComponent.Series.ControlVariable, controlVar)
+
+	return h
+}
+
+// AddControlVariableWithAuthor adds a control variable with author information to the most recently added series.
+//
+// This variant allows specifying who recorded the observation.
+//
+// Parameters:
+//   - observationCode: The observation code
+//   - codeSystem: The code system OID
+//   - displayName: Display name for the code
+//   - value: The observed value
+//   - unit: The unit of measurement
+//   - authorID: The author's ID root
+//   - authorExtension: The author's ID extension
+//   - authorName: The author's name
+//
+// Example:
+//
+//	h.AddRhythmSeries(...).
+//	  AddControlVariableWithAuthor("21612-7", types.LOINC_OID, "Reported Age",
+//	    "34", "a", "2.16.840.1.113883.3.5", "TECH_23", "JMK")
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddControlVariableWithAuthor(
+	observationCode string,
+	codeSystem types.CodeSystemOID,
+	displayName string,
+	value string,
+	unit string,
+	authorID string,
+	authorExtension string,
+	authorName string,
+) *Hl7xml {
+	if len(h.HL7AEcg.Component) == 0 {
+		return h
+	}
+
+	// Apply to the most recently added series
+	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
+
+	// Create control variable
+	controlVar := types.ControlVariable{
+		RelatedObservation: types.RelatedObservation{},
+	}
+
+	// Set observation code and value
+	controlVar.RelatedObservation.
+		SetObservationCode(observationCode, codeSystem, displayName, "LOINC").
+		SetValue(value, unit).
+		SetAuthorPerson(authorID, authorExtension, authorName)
+
+	// Add to series
+	lastComponent.Series.ControlVariable = append(lastComponent.Series.ControlVariable, controlVar)
+
+	return h
+}
+
+// =============================================================================
+// Add Confidentiality Code
+// =============================================================================
+func (h *Hl7xml) AddConfidentialityCode(code types.ConfidentialityCode) *Hl7xml {
+	h.HL7AEcg.ConfidentialityCode = &types.Code[types.ConfidentialityCode, string]{}
+	h.HL7AEcg.ConfidentialityCode.SetCode(code, "", "", "")
+	return h
+}
+
+// ============================================================================
+// Add Reason Code
+// =============================================================================
+func (h *Hl7xml) AddReasonCode(code types.ReasonCode) *Hl7xml {
+	h.HL7AEcg.ReasonCode = &types.Code[types.ReasonCode, string]{}
+	h.HL7AEcg.ReasonCode.SetCode(code, "", "", "")
+	return h
+}
+
 // =============================================================================
 // Helper functions
 // =============================================================================

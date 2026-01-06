@@ -14,27 +14,40 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 	default:
 	}
 
-	e.ID.Validate(ctx, vctx)
+	// Validate ID
+	if e.ID != nil {
+		e.ID.Validate(ctx, vctx)
+	} else {
+		vctx.AddError(ErrMissingID)
+	}
 
-	if e.Code.Code == "" {
+	// Validate Code
+	if e.Code == nil {
 		vctx.AddError(ErrMissingCode)
-	}
-	if e.Code.CodeSystem == "" {
-		vctx.AddError(ErrMissingCodeSystem)
+	} else {
+		if e.Code.Code == "" {
+			vctx.AddError(ErrMissingCode)
+		}
+		if e.Code.CodeSystem == "" {
+			vctx.AddError(ErrMissingCodeSystem)
+		}
 	}
 
+	// Validate EffectiveTime
 	if e.EffectiveTime == nil {
 		vctx.AddError(ErrMissingEffectiveTime)
 	} else {
 		e.EffectiveTime.Validate(ctx, vctx)
 	}
 
+	// Validate optional codes if present
 	if e.ConfidentialityCode != nil {
 		e.ConfidentialityCode.ValidateCode(ctx, vctx, "ConfidentialityCode")
 	}
 	if e.ReasonCode != nil {
 		e.ReasonCode.ValidateCode(ctx, vctx, "ReasonCode")
 	}
+
 	// Validate ComponentOf structure if present
 	if e.ComponentOf != nil {
 		// Validate TimepointEvent and nested structures
@@ -42,12 +55,37 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 		sa := &te.ComponentOf.SubjectAssignment
 
 		// Validate Subject within ComponentOf
-		sa.Subject.Validate(ctx, vctx)
+		if err := sa.Subject.Validate(ctx, vctx); err != nil {
+			return err
+		}
 
 		// Validate ClinicalTrial within ComponentOf
-		sa.ComponentOf.ClinicalTrial.Validate(ctx, vctx)
+		if err := sa.ComponentOf.ClinicalTrial.Validate(ctx, vctx); err != nil {
+			return err
+		}
 	} else {
 		vctx.AddError(ErrMissingSubject)
+	}
+
+	// Validate direct Subject if present (alternative structure)
+	if e.Subject != nil {
+		if err := e.Subject.Validate(ctx, vctx); err != nil {
+			return err
+		}
+	}
+
+	// Validate direct ClinicalTrial if present (alternative structure)
+	if e.ClinicalTrial != nil {
+		if err := e.ClinicalTrial.Validate(ctx, vctx); err != nil {
+			return err
+		}
+	}
+
+	// Validate all Component (Series) elements
+	for i := range e.Component {
+		if err := e.Component[i].Series.Validate(ctx, vctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -55,6 +93,9 @@ func (e *HL7AEcg) Validate(ctx context.Context, vctx *ValidationContext) error {
 
 func (id *ID) Validate(ctx context.Context, vctx *ValidationContext) error {
 	// Autocomplete empty Root with singleton if available
+	if id == nil {
+		id = &ID{}
+	}
 	if id.Root == "" {
 		if instanceID != nil && instanceID.ID != "" {
 			id.Root = instanceID.ID
