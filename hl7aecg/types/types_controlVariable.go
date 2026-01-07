@@ -1,67 +1,112 @@
 package types
 
+// =============================================================================
+// Control Variable Types
+// =============================================================================
+
 // ControlVariable captures related information about the subject or ECG collection conditions.
 //
-// Control variables capture related information that is not part of the core ECG data,
-// such as the subject's age, fasting status, or other relevant observations.
+// This structure supports nested control variables, where a parent control variable
+// can have child control variables in components. This is commonly used for filter
+// specifications where a filter type (e.g., Low Pass Filter) has nested parameters
+// (e.g., Cutoff Frequency).
+//
+// XML Structure (nested example):
+//
+//	<controlVariable>
+//	  <controlVariable>
+//	    <code code="MDC_ECG_CTL_VBL_ATTR_FILTER_LOW_PASS"
+//	          codeSystem="2.16.840.1.113883.6.24"
+//	          codeSystemName="MDC"
+//	          displayName="Low Pass Filter"/>
+//	    <component>
+//	      <controlVariable>
+//	        <code code="MDC_ECG_CTL_VBL_ATTR_FILTER_CUTOFF_FREQ"
+//	              codeSystem="2.16.840.1.113883.6.24"
+//	              codeSystemName="MDC"
+//	              displayName="Cutoff Frequency"/>
+//	        <value xsi:type="PQ" value="35" unit="Hz"/>
+//	      </controlVariable>
+//	    </component>
+//	  </controlVariable>
+//	</controlVariable>
+//
+// XML Structure (simple observation):
+//
+//	<controlVariable>
+//	  <controlVariable>
+//	    <code code="21612-7"
+//	          codeSystem="2.16.840.1.113883.6.1"
+//	          displayName="Reported Age"/>
+//	    <value xsi:type="PQ" value="34" unit="a"/>
+//	  </controlVariable>
+//	</controlVariable>
+//
+// Cardinality: Optional (0..* in Series)
+//
+// Reference: HL7 aECG Implementation Guide
+type ControlVariable struct {
+	// ControlVariable contains the actual control variable data.
+	//
+	// This nested structure is required by the HL7 aECG standard.
+	// The outer <controlVariable> is a wrapper, while the inner one
+	// contains the code, value, and optional components.
+	//
+	// XML Tag: <controlVariable>...</controlVariable>
+	// Cardinality: Optional (but typically present when ControlVariable is used)
+	ControlVariable *ControlVariableInner `xml:"controlVariable,omitempty"`
+}
+
+// ControlVariableInner represents the actual control variable data with code, value, and nested components.
+//
+// This structure can be used recursively - a control variable can contain
+// components, each of which contains another control variable.
 //
 // XML Structure:
 //
 //	<controlVariable>
-//	  <relatedObservation>
-//	    <code code="21612-7" codeSystem="2.16.840.1.113883.6.1" displayName="Reported Age"/>
-//	    <value xsi:type="PQ" value="34" unit="a"/>
-//	  </relatedObservation>
+//	  <code code="..." codeSystem="..." codeSystemName="..." displayName="..."/>
+//	  <text>Optional description</text>
+//	  <value xsi:type="PQ" value="..." unit="..."/>
+//	  <component>
+//	    <controlVariable>...</controlVariable>
+//	  </component>
 //	</controlVariable>
 //
-// Cardinality: Optional (0..* in Series)
-type ControlVariable struct {
-	// RelatedObservation contains the observation details.
+// Cardinality: Required (within ControlVariable wrapper)
+type ControlVariableInner struct {
+	// Code identifies the type of control variable.
 	//
-	// XML Tag: <relatedObservation>...</relatedObservation>
-	// Cardinality: Required (within ControlVariable)
-	RelatedObservation RelatedObservation `xml:"relatedObservation"`
-}
-
-// RelatedObservation represents an observation related to the ECG.
-//
-// This can capture various types of observations such as age, fasting status,
-// or other clinical information relevant to the ECG interpretation.
-//
-// XML Structure:
-//
-//	<relatedObservation>
-//	  <code code="21612-7" codeSystem="2.16.840.1.113883.6.1" displayName="Reported Age"/>
-//	  <text>Subject age at time of ECG</text>
-//	  <value xsi:type="PQ" value="34" unit="a"/>
-//	  <author>...</author>
-//	</relatedObservation>
-//
-// Cardinality: Required (within ControlVariable)
-type RelatedObservation struct {
-	// Code identifies the type of observation.
+	// Common codes from MDC (2.16.840.1.113883.6.24):
+	//   - "MDC_ECG_CTL_VBL_ATTR_FILTER_LOW_PASS": Low pass filter
+	//   - "MDC_ECG_CTL_VBL_ATTR_FILTER_HIGH_PASS": High pass filter
+	//   - "MDC_ECG_CTL_VBL_ATTR_FILTER_NOTCH": Notch filter
+	//   - "MDC_ECG_CTL_VBL_ATTR_FILTER_CUTOFF_FREQ": Cutoff frequency
+	//   - "MDC_ECG_CTL_VBL_ATTR_FILTER_NOTCH_FREQ": Notch filter frequency
 	//
-	// Common codes include:
-	//   - LOINC "21612-7": Reported Age
-	//   - LOINC "49541-6": Fasting status
+	// Common codes from LOINC (2.16.840.1.113883.6.1):
+	//   - "21612-7": Reported Age
+	//   - "49541-6": Fasting status
 	//
-	// XML Tag: <code code="..." codeSystem="..." displayName="..."/>
+	// XML Tag: <code code="..." codeSystem="..." codeSystemName="..." displayName="..."/>
 	// Cardinality: Optional
 	Code *Code[string, CodeSystemOID] `xml:"code,omitempty"`
 
-	// Text provides a textual description of the observation.
+	// Text provides a textual description of the control variable.
 	//
-	// This can be used when the observation is not a simple quantity
-	// that can be put into the value element.
+	// This can be used when additional explanation is needed beyond
+	// what the code and value provide.
 	//
 	// XML Tag: <text>...</text>
 	// Cardinality: Optional
 	Text *string `xml:"text,omitempty"`
 
-	// Value contains the observed value.
+	// Value contains the value of the control variable.
 	//
-	// For example, if the subject's age is observed, this would contain
-	// the age value with appropriate units (e.g., "34 years").
+	// For example:
+	//   - Age: value="34" unit="a" (years)
+	//   - Cutoff frequency: value="35" unit="Hz"
+	//   - Temperature: value="20" unit="Cel"
 	//
 	// Note: The xsi:type attribute is typically "PQ" (Physical Quantity)
 	//
@@ -69,254 +114,37 @@ type RelatedObservation struct {
 	// Cardinality: Optional
 	Value *PhysicalQuantity `xml:"value,omitempty"`
 
-	// Author identifies who or what device recorded this observation.
+	// Component contains nested control variables.
 	//
-	// XML Tag: <author>...</author>
-	// Cardinality: Optional
-	Author *ObservationAuthor `xml:"author,omitempty"`
+	// This is used when a control variable has sub-parameters. For example,
+	// a filter specification (Low Pass Filter) can have nested components
+	// for its parameters (Cutoff Frequency, Filter Order, etc.).
+	//
+	// XML Tag: <component>...</component>
+	// Cardinality: Optional (0..*)
+	Component []ControlVariableComponent `xml:"component,omitempty"`
 }
 
-// ObservationAuthor identifies who or what device recorded the observation.
+// ControlVariableComponent represents a component that contains a nested control variable.
+//
+// This structure allows for recursive nesting of control variables, enabling
+// complex hierarchical specifications like filter configurations with multiple
+// parameters.
 //
 // XML Structure:
 //
-//	<author>
-//	  <assignedEntity>...</assignedEntity>
-//	</author>
+//	<component>
+//	  <controlVariable>
+//	    <code code="..." codeSystem="..." displayName="..."/>
+//	    <value xsi:type="PQ" value="..." unit="..."/>
+//	  </controlVariable>
+//	</component>
 //
-// Cardinality: Optional (within RelatedObservation)
-type ObservationAuthor struct {
-	// AssignedEntity contains the author's identification and organization.
+// Cardinality: Optional (0..* in ControlVariableInner)
+type ControlVariableComponent struct {
+	// ControlVariable contains the nested control variable data.
 	//
-	// XML Tag: <assignedEntity>...</assignedEntity>
-	// Cardinality: Required (within ObservationAuthor)
-	AssignedEntity AssignedEntity `xml:"assignedEntity"`
-}
-
-// AssignedEntity represents the person or device that authored an observation.
-//
-// XML Structure:
-//
-//	<assignedEntity>
-//	  <id root="2.16.840.1.113883.3.5" extension="TECH_23"/>
-//	  <assignedAuthorType>...</assignedAuthorType>
-//	  <representedAuthoringOrganization>...</representedAuthoringOrganization>
-//	</assignedEntity>
-//
-// Cardinality: Required (within ObservationAuthor)
-type AssignedEntity struct {
-	// ID is the unique identifier of the observation author.
-	//
-	// This is the ID assigned by the RepresentedAuthoringOrganization.
-	// For example, if the authoring organization is the trial site,
-	// this would be the ID assigned by that site.
-	//
-	// XML Tag: <id root="..." extension="..."/>
-	// Cardinality: Optional
-	ID *ID `xml:"id,omitempty"`
-
-	// AssignedAuthorType specifies whether the author is a person or device.
-	//
-	// XML Tag: <assignedAuthorType>...</assignedAuthorType>
-	// Cardinality: Optional
-	AssignedAuthorType *AssignedAuthorType `xml:"assignedAuthorType,omitempty"`
-
-	// RepresentedAuthoringOrganization is the organization responsible for the author.
-	//
-	// XML Tag: <representedAuthoringOrganization>...</representedAuthoringOrganization>
-	// Cardinality: Optional
-	RepresentedAuthoringOrganization *RepresentedAuthoringOrganization `xml:"representedAuthoringOrganization,omitempty"`
-}
-
-// AssignedAuthorType specifies whether the author is a person or device.
-//
-// Only one of AssignedPerson or AssignedDevice should be set.
-//
-// XML Structure:
-//
-//	<assignedAuthorType>
-//	  <assignedPerson>
-//	    <name>JMK</name>
-//	  </assignedPerson>
-//	</assignedAuthorType>
-//
-// Cardinality: Optional (within AssignedEntity)
-type AssignedAuthorType struct {
-	// AssignedPerson identifies a person who authored the observation.
-	//
-	// XML Tag: <assignedPerson>...</assignedPerson>
-	// Cardinality: Optional (mutually exclusive with AssignedDevice)
-	AssignedPerson *ObservationAssignedPerson `xml:"assignedPerson,omitempty"`
-
-	// AssignedDevice identifies a device that authored the observation.
-	//
-	// XML Tag: <assignedDevice>...</assignedDevice>
-	// Cardinality: Optional (mutually exclusive with AssignedPerson)
-	AssignedDevice *ObservationAssignedDevice `xml:"assignedDevice,omitempty"`
-}
-
-// ObservationAssignedPerson represents a person who authored an observation.
-//
-// XML Structure:
-//
-//	<assignedPerson>
-//	  <name>JMK</name>
-//	</assignedPerson>
-//
-// Cardinality: Optional (within AssignedAuthorType)
-type ObservationAssignedPerson struct {
-	// Name is the name of the person who authored the observation.
-	//
-	// Can be initials, full name, or structured PersonName.
-	//
-	// XML Tag: <name>...</name>
-	// Cardinality: Optional
-	Name *string `xml:"name,omitempty"`
-}
-
-// ObservationAssignedDevice represents a device that authored an observation.
-//
-// XML Structure:
-//
-//	<assignedDevice>
-//	  <id root="1.3.6.1.4.1.57054" extension="SN234"/>
-//	  <code code="DEVICE_TYPE" codeSystem=""/>
-//	  <manufacturerModelName>Device Model</manufacturerModelName>
-//	  <softwareName>v1.0</softwareName>
-//	  <playedManufacturedDevice>...</playedManufacturedDevice>
-//	</assignedDevice>
-//
-// Cardinality: Optional (within AssignedAuthorType)
-type ObservationAssignedDevice struct {
-	// ID is the unique identifier of the device.
-	//
-	// XML Tag: <id root="..." extension="..."/>
-	// Cardinality: Optional
-	ID *ID `xml:"id,omitempty"`
-
-	// Code identifies the type of device.
-	//
-	// Note: At the time of guide publishing, no formal vocabulary existed.
-	//
-	// XML Tag: <code code="..." codeSystem=""/>
-	// Cardinality: Optional
-	Code *Code[DeviceTypeCode, CodeSystemOID] `xml:"code,omitempty"`
-
-	// ManufacturerModelName is the model name of the device.
-	//
-	// XML Tag: <manufacturerModelName>...</manufacturerModelName>
-	// Cardinality: Optional
-	ManufacturerModelName *string `xml:"manufacturerModelName,omitempty"`
-
-	// SoftwareName is the name and version of software running in the device.
-	//
-	// XML Tag: <softwareName>...</softwareName>
-	// Cardinality: Optional
-	SoftwareName *string `xml:"softwareName,omitempty"`
-
-	// PlayedManufacturedDevice contains the device manufacturer information.
-	//
-	// XML Tag: <playedManufacturedDevice>...</playedManufacturedDevice>
-	// Cardinality: Optional
-	PlayedManufacturedDevice *PlayedManufacturedDevice `xml:"playedManufacturedDevice,omitempty"`
-}
-
-// PlayedManufacturedDevice contains information about the device manufacturer.
-//
-// XML Structure:
-//
-//	<playedManufacturedDevice>
-//	  <manufacturingOrganization>
-//	    <id root="1.3.6.1.4.1.57054"/>
-//	    <name>Device Manufacturer Inc.</name>
-//	  </manufacturingOrganization>
-//	</playedManufacturedDevice>
-//
-// Cardinality: Optional (within ObservationAssignedDevice)
-type PlayedManufacturedDevice struct {
-	// ManufacturingOrganization identifies the organization that manufactured the device.
-	//
-	// XML Tag: <manufacturingOrganization>...</manufacturingOrganization>
-	// Cardinality: Optional
-	ManufacturingOrganization *ObservationManufacturingOrganization `xml:"manufacturingOrganization,omitempty"`
-}
-
-// ObservationManufacturingOrganization represents the manufacturer of a device.
-//
-// XML Structure:
-//
-//	<manufacturingOrganization>
-//	  <id root="1.3.6.1.4.1.57054"/>
-//	  <name>Device Manufacturer Inc.</name>
-//	</manufacturingOrganization>
-//
-// Cardinality: Optional (within PlayedManufacturedDevice)
-type ObservationManufacturingOrganization struct {
-	// ID is the unique identifier of the manufacturing organization.
-	//
-	// XML Tag: <id root="..."/>
-	// Cardinality: Optional
-	ID *ID `xml:"id,omitempty"`
-
-	// Name is the name of the manufacturing organization.
-	//
-	// XML Tag: <name>...</name>
-	// Cardinality: Optional
-	Name *string `xml:"name,omitempty"`
-}
-
-// RepresentedAuthoringOrganization is the organization responsible for the person or device.
-//
-// XML Structure:
-//
-//	<representedAuthoringOrganization>
-//	  <name>1st Clinic of Milwaukee</name>
-//	  <identification>
-//	    <id root="2.16.840.1.113883.3.5" extension="SITE_1"/>
-//	  </identification>
-//	</representedAuthoringOrganization>
-//
-// Cardinality: Optional (within AssignedEntity)
-type RepresentedAuthoringOrganization struct {
-	// ID is the globally known unique identifier of the organization.
-	//
-	// This is an ID that would be globally known outside of the
-	// organization's role in the trial.
-	//
-	// XML Tag: <id root="..."/>
-	// Cardinality: Optional
-	ID *ID `xml:"id,omitempty"`
-
-	// Name is the name of the organization.
-	//
-	// XML Tag: <name>...</name>
-	// Cardinality: Optional
-	Name *string `xml:"name,omitempty"`
-
-	// Identification contains the role-specific ID of the organization.
-	//
-	// This is mostly an ID assigned by the trial or the sponsoring organization.
-	//
-	// XML Tag: <identification>...</identification>
-	// Cardinality: Optional
-	Identification *OrganizationIdentification `xml:"identification,omitempty"`
-}
-
-// OrganizationIdentification contains the role-specific ID of an organization.
-//
-// XML Structure:
-//
-//	<identification>
-//	  <id root="2.16.840.1.113883.3.5" extension="SITE_1"/>
-//	</identification>
-//
-// Cardinality: Optional (within RepresentedAuthoringOrganization)
-type OrganizationIdentification struct {
-	// ID is the role-specific identifier of the organization.
-	//
-	// This is most likely an ID assigned by the trial or sponsoring organization.
-	//
-	// XML Tag: <id root="..." extension="..."/>
-	// Cardinality: Optional
-	ID *ID `xml:"id,omitempty"`
+	// XML Tag: <controlVariable>...</controlVariable>
+	// Cardinality: Required (within ControlVariableComponent)
+	ControlVariable *ControlVariableInner `xml:"controlVariable,omitempty"`
 }

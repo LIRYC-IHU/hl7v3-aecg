@@ -196,16 +196,18 @@ func (cv *ControlVariable) Validate(ctx context.Context, vctx *ValidationContext
 	default:
 	}
 
-	// RelatedObservation is required
-	if err := cv.RelatedObservation.Validate(ctx, vctx); err != nil {
-		return err
+	// ControlVariable inner structure is optional but must be valid if present
+	if cv.ControlVariable != nil {
+		if err := cv.ControlVariable.Validate(ctx, vctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// Validate validates the RelatedObservation structure.
-func (ro *RelatedObservation) Validate(ctx context.Context, vctx *ValidationContext) error {
+// Validate validates the ControlVariableInner structure (recursive).
+func (cvi *ControlVariableInner) Validate(ctx context.Context, vctx *ValidationContext) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -213,16 +215,16 @@ func (ro *RelatedObservation) Validate(ctx context.Context, vctx *ValidationCont
 	}
 
 	// Code is optional but must be valid if present
-	if ro.Code != nil {
-		ro.Code.ValidateCode(ctx, vctx, "ObservationCode")
+	if cvi.Code != nil {
+		cvi.Code.ValidateCode(ctx, vctx, "ControlVariableCode")
 	}
 
-	// Text is optional - no validation needed
 	// Value is optional - no validation needed for PhysicalQuantity
+	// Text is optional - no validation needed for strings
 
-	// Author is optional but must be valid if present
-	if ro.Author != nil {
-		if err := ro.Author.Validate(ctx, vctx); err != nil {
+	// Component is optional but must be valid if present
+	for i := range cvi.Component {
+		if err := cvi.Component[i].Validate(ctx, vctx); err != nil {
 			return err
 		}
 	}
@@ -230,47 +232,17 @@ func (ro *RelatedObservation) Validate(ctx context.Context, vctx *ValidationCont
 	return nil
 }
 
-// Validate validates the ObservationAuthor structure.
-func (oa *ObservationAuthor) Validate(ctx context.Context, vctx *ValidationContext) error {
+// Validate validates the ControlVariableComponent structure.
+func (cvc *ControlVariableComponent) Validate(ctx context.Context, vctx *ValidationContext) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
 	}
 
-	// AssignedEntity validation
-	if err := oa.AssignedEntity.Validate(ctx, vctx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Validate validates the AssignedEntity structure.
-func (ae *AssignedEntity) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ID is optional but must be valid if present
-	if ae.ID != nil {
-		if err := ae.ID.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	// AssignedAuthorType is optional but must be valid if present
-	if ae.AssignedAuthorType != nil {
-		if err := ae.AssignedAuthorType.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	// RepresentedAuthoringOrganization is optional but must be valid if present
-	if ae.RepresentedAuthoringOrganization != nil {
-		if err := ae.RepresentedAuthoringOrganization.Validate(ctx, vctx); err != nil {
+	// ControlVariable is required within a component
+	if cvc.ControlVariable != nil {
+		if err := cvc.ControlVariable.Validate(ctx, vctx); err != nil {
 			return err
 		}
 	}
@@ -278,138 +250,3 @@ func (ae *AssignedEntity) Validate(ctx context.Context, vctx *ValidationContext)
 	return nil
 }
 
-// Validate validates the AssignedAuthorType structure.
-func (aat *AssignedAuthorType) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// Either AssignedPerson or AssignedDevice should be present
-	// AssignedPerson - no specific validation needed
-	// AssignedDevice is optional but must be valid if present
-	if aat.AssignedDevice != nil {
-		if err := aat.AssignedDevice.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Validate validates the ObservationAssignedDevice structure.
-func (oad *ObservationAssignedDevice) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ID is optional but must be valid if present
-	if oad.ID != nil {
-		if err := oad.ID.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	// Code is optional but must be valid if present
-	if oad.Code != nil {
-		oad.Code.ValidateCode(ctx, vctx, "DeviceTypeCode")
-	}
-
-	// ManufacturerModelName is optional - no validation needed
-	// SoftwareName is optional - no validation needed
-
-	// PlayedManufacturedDevice is optional but must be valid if present
-	if oad.PlayedManufacturedDevice != nil {
-		if err := oad.PlayedManufacturedDevice.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Validate validates the PlayedManufacturedDevice structure.
-func (pmd *PlayedManufacturedDevice) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ManufacturingOrganization is optional but must be valid if present
-	if pmd.ManufacturingOrganization != nil {
-		if err := pmd.ManufacturingOrganization.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Validate validates the ObservationManufacturingOrganization structure.
-func (omo *ObservationManufacturingOrganization) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ID is optional but must be valid if present
-	if omo.ID != nil {
-		if err := omo.ID.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	// Name is optional - no validation needed
-
-	return nil
-}
-
-// Validate validates the RepresentedAuthoringOrganization structure.
-func (rao *RepresentedAuthoringOrganization) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ID is optional but must be valid if present
-	if rao.ID != nil {
-		if err := rao.ID.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	// Name is optional - no validation needed
-
-	// Identification is optional but must be valid if present
-	if rao.Identification != nil {
-		if err := rao.Identification.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Validate validates the OrganizationIdentification structure.
-func (oi *OrganizationIdentification) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	// ID is optional but must be valid if present
-	if oi.ID != nil {
-		if err := oi.ID.Validate(ctx, vctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

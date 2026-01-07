@@ -29,6 +29,7 @@ import (
 //	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
 func (h *Hl7xml) AddRhythmSeries(
 	startTime, endTime string,
+	inclusive_low, inclusive_high *bool,
 	sampleRate float64,
 	leads map[types.LeadCode][]int,
 	origin, scale float64,
@@ -42,6 +43,12 @@ func (h *Hl7xml) AddRhythmSeries(
 		origin,
 		scale,
 	)
+	if inclusive_low != nil {
+		series.EffectiveTime.Low.Inclusive = inclusive_low
+	}
+	if inclusive_high != nil {
+		series.EffectiveTime.High.Inclusive = inclusive_high
+	}
 
 	h.HL7AEcg.Component = append(h.HL7AEcg.Component, types.Component{Series: *series})
 	return h
@@ -252,31 +259,26 @@ func (h *Hl7xml) AddSecondaryPerformer(
 	return h
 }
 
-// AddControlVariable adds a control variable (observation) to the most recently added series.
+// AddControlVariable adds a control variable to the most recently added series.
 //
-// Control variables capture related information about the subject or ECG collection conditions,
-// such as the subject's age, fasting status, or other clinical information.
+// Control variables capture related information about ECG collection conditions,
+// such as filter settings, subject observations (age, etc.), or other parameters.
 //
 // Parameters:
-//   - observationCode: The observation code (e.g., "21612-7" for "Reported Age")
-//   - codeSystem: The code system OID (e.g., types.LOINC_OID)
-//   - displayName: Display name for the code (e.g., "Reported Age")
-//   - value: The observed value (e.g., "34")
-//   - unit: The unit of measurement (e.g., "a" for years)
+//   - cv: A pointer to the ControlVariable to add (use types.New* functions to create)
 //
 // Example:
 //
-//	h.AddRhythmSeries(...).
-//	  AddControlVariable("21612-7", types.LOINC_OID, "Reported Age", "34", "a")
+//	// Add a low pass filter
+//	h.AddControlVariable(types.NewLowPassFilter("35", "Hz"))
+//
+//	// Add a custom control variable
+//	cv := types.NewControlVariable("CUSTOM_CODE", types.MDC_OID, "MDC", "Custom Parameter")
+//	cv.ControlVariable.SetValue("100", "unit")
+//	h.AddControlVariable(cv)
 //
 // Returns the Hl7xml instance for method chaining.
-func (h *Hl7xml) AddControlVariable(
-	observationCode string,
-	codeSystem types.CodeSystemOID,
-	displayName string,
-	value string,
-	unit string,
-) *Hl7xml {
+func (h *Hl7xml) AddControlVariable(cv *types.ControlVariable) *Hl7xml {
 	if len(h.HL7AEcg.Component) == 0 {
 		return h
 	}
@@ -284,79 +286,81 @@ func (h *Hl7xml) AddControlVariable(
 	// Apply to the most recently added series
 	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
 
-	// Create control variable
-	controlVar := types.ControlVariable{
-		RelatedObservation: types.RelatedObservation{},
-	}
-
-	// Set observation code
-	controlVar.RelatedObservation.SetObservationCode(observationCode, codeSystem, displayName, "LOINC")
-
-	// Set value
-	if value != "" {
-		controlVar.RelatedObservation.SetValue(value, unit)
-	}
-
 	// Add to series
-	lastComponent.Series.ControlVariable = append(lastComponent.Series.ControlVariable, controlVar)
+	lastComponent.Series.ControlVariable = append(lastComponent.Series.ControlVariable, *cv)
 
 	return h
 }
 
-// AddControlVariableWithAuthor adds a control variable with author information to the most recently added series.
+// AddLowPassFilter adds a low pass filter control variable to the most recently added series.
 //
-// This variant allows specifying who recorded the observation.
+// This is a convenience method for the common case of adding a low pass filter specification.
 //
 // Parameters:
-//   - observationCode: The observation code
-//   - codeSystem: The code system OID
-//   - displayName: Display name for the code
-//   - value: The observed value
-//   - unit: The unit of measurement
-//   - authorID: The author's ID root
-//   - authorExtension: The author's ID extension
-//   - authorName: The author's name
+//   - cutoffFreq: The cutoff frequency value as a string (e.g., "35")
+//   - unit: The frequency unit (typically "Hz")
 //
 // Example:
 //
-//	h.AddRhythmSeries(...).
-//	  AddControlVariableWithAuthor("21612-7", types.LOINC_OID, "Reported Age",
-//	    "34", "a", "2.16.840.1.113883.3.5", "TECH_23", "JMK")
+//	h.AddLowPassFilter("35", "Hz")
 //
 // Returns the Hl7xml instance for method chaining.
-func (h *Hl7xml) AddControlVariableWithAuthor(
-	observationCode string,
-	codeSystem types.CodeSystemOID,
-	displayName string,
-	value string,
-	unit string,
-	authorID string,
-	authorExtension string,
-	authorName string,
-) *Hl7xml {
-	if len(h.HL7AEcg.Component) == 0 {
-		return h
-	}
-
-	// Apply to the most recently added series
-	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
-
-	// Create control variable
-	controlVar := types.ControlVariable{
-		RelatedObservation: types.RelatedObservation{},
-	}
-
-	// Set observation code and value
-	controlVar.RelatedObservation.
-		SetObservationCode(observationCode, codeSystem, displayName, "LOINC").
-		SetValue(value, unit).
-		SetAuthorPerson(authorID, authorExtension, authorName)
-
-	// Add to series
-	lastComponent.Series.ControlVariable = append(lastComponent.Series.ControlVariable, controlVar)
-
-	return h
+func (h *Hl7xml) AddLowPassFilter(cutoffFreq, unit string) *Hl7xml {
+	return h.AddControlVariable(types.NewLowPassFilter(cutoffFreq, unit))
 }
+
+// AddHighPassFilter adds a high pass filter control variable to the most recently added series.
+//
+// This is a convenience method for the common case of adding a high pass filter specification.
+//
+// Parameters:
+//   - cutoffFreq: The cutoff frequency value as a string (e.g., "0.56")
+//   - unit: The frequency unit (typically "Hz")
+//
+// Example:
+//
+//	h.AddHighPassFilter("0.56", "Hz")
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddHighPassFilter(cutoffFreq, unit string) *Hl7xml {
+	return h.AddControlVariable(types.NewHighPassFilter(cutoffFreq, unit))
+}
+
+// AddNotchFilter adds a notch filter control variable to the most recently added series.
+//
+// This is a convenience method for the common case of adding a notch filter specification.
+//
+// Parameters:
+//   - notchFreq: The notch frequency value as a string (e.g., "50" or "60")
+//   - unit: The frequency unit (typically "Hz")
+//
+// Example:
+//
+//	h.AddNotchFilter("50", "Hz")  // 50 Hz for Europe
+//	h.AddNotchFilter("60", "Hz")  // 60 Hz for North America
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddNotchFilter(notchFreq, unit string) *Hl7xml {
+	return h.AddControlVariable(types.NewNotchFilter(notchFreq, unit))
+}
+
+// AddAgeObservation adds an age observation control variable to the most recently added series.
+//
+// This is a convenience method for the common case of recording the subject's age.
+//
+// Parameters:
+//   - age: The age value as a string (e.g., "34")
+//   - unit: The unit (typically "a" for years)
+//
+// Example:
+//
+//	h.AddAgeObservation("34", "a")
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddAgeObservation(age, unit string) *Hl7xml {
+	return h.AddControlVariable(types.NewAgeObservation(age, unit))
+}
+
 
 // =============================================================================
 // Add Confidentiality Code
