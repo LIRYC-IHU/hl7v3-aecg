@@ -307,6 +307,18 @@ type Code[T ~string, U ~string] struct {
 	// Required: Yes (but may be empty string for informal vocabularies)
 	CodeSystem U `xml:"codeSystem,attr"`
 
+	// CodeSystemName is an optional human-readable name for the code system.
+	//
+	// Examples:
+	//   - "MDC" (for ISO 11073)
+	//   - "ActCode" (for HL7 ActCode)
+	//   - "CPT" (for Current Procedural Terminology)
+	//
+	// Not present in the FDA example, but useful for documentation.
+	//
+	// Required: No (omitted in XML when empty)
+	CodeSystemName string `xml:"codeSystemName,attr,omitempty"`
+
 	// DisplayName is a human-readable name for the code.
 	// Used for display purposes, not for processing logic.
 	//
@@ -319,18 +331,6 @@ type Code[T ~string, U ~string] struct {
 	//
 	// Required: No (omitted in XML when empty)
 	DisplayName string `xml:"displayName,attr,omitempty"`
-
-	// CodeSystemName is an optional human-readable name for the code system.
-	//
-	// Examples:
-	//   - "MDC" (for ISO 11073)
-	//   - "ActCode" (for HL7 ActCode)
-	//   - "CPT" (for Current Procedural Terminology)
-	//
-	// Not present in the FDA example, but useful for documentation.
-	//
-	// Required: No (omitted in XML when empty)
-	CodeSystemName string `xml:"codeSystemName,attr,omitempty"`
 }
 
 // NewConfidentialityCode creates a new confidentiality code instance.

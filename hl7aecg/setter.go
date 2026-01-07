@@ -1,6 +1,8 @@
 package hl7aecg
 
 import (
+	"fmt"
+
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
 )
 
@@ -124,4 +126,47 @@ func (h *Hl7xml) SetResponsibleParty(investigatorRoot, investigatorID, prefix, g
 	}
 
 	return h
+}
+
+// SetSeriesCode updates the code of the most recently added series with additional attributes.
+//
+// This method automatically finds the last series in the Component array and updates
+// its code with the provided codeSystemName and displayName attributes.
+//
+// Parameters:
+//   - code: The code value (e.g., RHYTHM_CODE, REPRESENTATIVE_BEAT_CODE)
+//   - codeSystem: The OID of the code system (e.g., HL7_ActCode_OID)
+//   - codeSystemName: Human-readable name of the code system (e.g., "ActCode")
+//   - displayName: Human-readable name of the code (e.g., "Rhythm Waveforms")
+//
+// Returns an error if no series exists in the Component array.
+//
+// Example:
+//
+//	err := h.SetSeriesCode(
+//	    types.RHYTHM_CODE,
+//	    types.HL7_ActCode_OID,
+//	    "ActCode",
+//	    "Rhythm Waveforms",
+//	)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+// This allows calling h.SetSeriesCode(...) instead of having to access
+// h.HL7AEcg.Component[index].Series.SetSeriesCode(...) manually.
+func (h *Hl7xml) SetSeriesCode(code types.SeriesTypeCode, codeSystem types.CodeSystemOID, codeSystemName, displayName string) error {
+	// Check if there are any components
+	if len(h.HL7AEcg.Component) == 0 {
+		return fmt.Errorf("no series found: Component array is empty")
+	}
+
+	// Get the last component
+	lastIdx := len(h.HL7AEcg.Component) - 1
+	lastComponent := &h.HL7AEcg.Component[lastIdx]
+
+	// Update the series code
+	lastComponent.Series.SetSeriesCode(code, codeSystem, codeSystemName, displayName)
+
+	return nil
 }
