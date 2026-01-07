@@ -31,7 +31,7 @@ func (s *SubjectDemographicPerson) SetBirthDate(birthDate string) *SubjectDemogr
 	if s.BirthTime == nil {
 		s.BirthTime = &Time{}
 	}
-	s.BirthTime = &Time{Value: birthDate}
+	s.BirthTime = &Time{Value: birthDate, Inclusive: nil}
 	return s
 }
 

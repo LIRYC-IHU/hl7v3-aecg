@@ -10,6 +10,11 @@ import (
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
 )
 
+var (
+	tr bool = true
+	f  bool = false
+)
+
 // TestCompleteWorkflow_MinimalECG tests creating a minimal valid aECG document
 func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 	// Create temporary directory for output
@@ -36,7 +41,7 @@ func TestCompleteWorkflow_MinimalECG(t *testing.T) {
 
 	// Set basic metadata
 	h.SetText("Test ECG Document").
-		SetEffectiveTime("20231223120000", "20231223120010", true, false)
+		SetEffectiveTime("20231223120000", "20231223120010", &tr, &f)
 
 	// Set subject information (empty ID uses global root ID)
 	h.SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
@@ -72,7 +77,7 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 	h.HL7AEcg.ID.SetID("", "TEST-FULL-DOC-001")
 
 	h.SetText("Complete 12-lead ECG for clinical trial").
-		SetEffectiveTime("20231223120000.000", "20231223120010.000", true, false)
+		SetEffectiveTime("20231223120000.000", "20231223120010.000", &tr, &f)
 
 	// Set confidentiality and reason codes
 	h.HL7AEcg.ConfidentialityCode = &types.Code[types.ConfidentialityCode, string]{}
@@ -139,7 +144,7 @@ func TestXMLMarshaling(t *testing.T) {
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetText("XML Marshaling Test").
-		SetEffectiveTime("20231223120000", "20231223120010", true, false).
+		SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
 	// Marshal to XML
@@ -238,7 +243,7 @@ func TestValidation_ErrorCases(t *testing.T) {
 			name: "Missing subject",
 			setupFunc: func(h *Hl7xml) {
 				h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "").
-					SetEffectiveTime("20231223120000", "20231223120010", true, false)
+					SetEffectiveTime("20231223120000", "20231223120010", &tr, &f)
 				h.HL7AEcg.Subject = nil
 			},
 			wantError: true,
@@ -251,7 +256,7 @@ func TestValidation_ErrorCases(t *testing.T) {
 				h.HL7AEcg.ID.SetID("", "VALID-DOC-001")
 				h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 				h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
-				h.SetEffectiveTime("20231223120000", "20231223120010", true, false).
+				h.SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 					SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 			},
 			wantError: false,
@@ -283,7 +288,7 @@ func TestFileOutput(t *testing.T) {
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 	h.SetText("File Output Test").
-		SetEffectiveTime("20231223120000", "20231223120010", true, false).
+		SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
 	// Generate XML file (using Test() method which writes to /tmp/hl7aecg_example.xml)
@@ -332,7 +337,7 @@ func TestFluentAPI_Chaining(t *testing.T) {
 	result.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
 
 	result.SetText("Fluent API Test").
-		SetEffectiveTime("20231223120000", "20231223120010", true, false).
+		SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED).
 		SetSubjectDemographics("JDO", "PAT-001", types.GENDER_MALE, "19530508", types.RACE_WHITE)
 
@@ -366,7 +371,7 @@ func TestContextCancellation(t *testing.T) {
 	h.HL7AEcg.ID.SetID("", "TEST-CTX-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
-	h.SetEffectiveTime("20231223120000", "20231223120010", true, false).
+	h.SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
 	// Create a cancelled context
@@ -392,7 +397,7 @@ func TestMultipleSeries(t *testing.T) {
 	h.HL7AEcg.ID.SetID("", "TEST-MULTI-001")
 	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
 	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
-	h.SetEffectiveTime("20231223120000", "20231223120100", true, false).
+	h.SetEffectiveTime("20231223120000", "20231223120100", &tr, &f).
 		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
 
 	// Add multiple rhythm series

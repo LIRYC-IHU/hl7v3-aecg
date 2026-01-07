@@ -46,7 +46,8 @@ func (s *SubjectDemographicPerson) Validate(ctx context.Context, vctx *Validatio
 	if s.RaceCode != nil {
 		s.RaceCode.ValidateCode(ctx, vctx, "RaceCode")
 	}
-
+	s.Medications.Validate(ctx, vctx)
+	s.ClinicalClassifications.Validate(ctx, vctx)
 	return nil
 }
 
@@ -84,5 +85,25 @@ func (t *TreatmentGroupAssignment) Validate(ctx context.Context, vctx *Validatio
 func (c *ComponentOfClinicalTrial) Validate(ctx context.Context, vctx *ValidationContext) error {
 	// ClinicalTrial is required
 	c.ClinicalTrial.Validate(ctx, vctx)
+	return nil
+}
+
+// Validate Medications structure.
+// Ensures at least one Medication entry is present.
+func (m *Medications) Validate(ctx context.Context, vctx *ValidationContext) error {
+	if len(m.Medication) == 0 {
+		m.Medication = []string{}
+		m.Medication = append(m.Medication, "")
+	}
+	return nil
+}
+
+// Validate ClinicalClassifications structure.
+// Ensures at least one ClinicalClassification entry is present.
+func (c *ClinicalClassifications) Validate(ctx context.Context, vctx *ValidationContext) error {
+	if len(c.ClinicalClassification) == 0 {
+		c.ClinicalClassification = []string{}
+		c.ClinicalClassification = append(c.ClinicalClassification, "")
+	}
 	return nil
 }

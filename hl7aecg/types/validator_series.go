@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"fmt"
 )
 
 // Validate validates the Series structure.
@@ -413,21 +412,4 @@ func (oi *OrganizationIdentification) Validate(ctx context.Context, vctx *Valida
 	}
 
 	return nil
-}
-
-// Validate Medications structure.
-// Ensures at least one Medication entry is present.
-func (m *Medications) Validate(ctx context.Context, vctx *ValidationContext) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-	fmt.Println("Validating Medications")
-	if len(m.Medication) == 0 {
-		m.Medication = []string{}
-		m.Medication = append(m.Medication, "")
-	}
-	return nil
-
 }

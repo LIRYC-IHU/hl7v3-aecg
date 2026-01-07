@@ -498,6 +498,8 @@ func TestCode_XMLMarshal(t *testing.T) {
 
 // TestTime_XMLMarshal tests XML marshaling for Time type
 func TestTime_XMLMarshal(t *testing.T) {
+	tr := true
+	f := false
 	tests := []struct {
 		name    string
 		time    Time
@@ -505,12 +507,12 @@ func TestTime_XMLMarshal(t *testing.T) {
 	}{
 		{
 			name:    "Time with HL7 timestamp",
-			time:    Time{Value: "20231223120000", Inclusive: true},
+			time:    Time{Value: "20231223120000", Inclusive: &tr},
 			wantXML: `<Time value="20231223120000" inclusive="true"></Time>`,
 		},
 		{
 			name:    "Time with milliseconds",
-			time:    Time{Value: "20231223120000.123", Inclusive: false},
+			time:    Time{Value: "20231223120000.123", Inclusive: &f},
 			wantXML: `<Time value="20231223120000.123" inclusive="false"></Time>`,
 		},
 	}

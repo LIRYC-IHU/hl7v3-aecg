@@ -143,8 +143,10 @@ func TestSetEffectiveTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tr := true
+			f := false
 			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
-			result := h.SetEffectiveTime(tt.low, tt.high, true, false)
+			result := h.SetEffectiveTime(tt.low, tt.high, &tr, &f)
 
 			if result == nil {
 				t.Errorf("SetEffectiveTime() returned nil")
@@ -407,10 +409,12 @@ func TestAddRepresentativeBeatSeries(t *testing.T) {
 
 // TestFluentAPI tests the fluent API (method chaining)
 func TestFluentAPI(t *testing.T) {
+	tr := true
+	f := false
 	h := NewHl7xml("/tmp/test").
 		Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "CPT-4", "").
 		SetText("Test ECG").
-		SetEffectiveTime("20231223120000", "20231223120010", true, false).
+		SetEffectiveTime("20231223120000", "20231223120010", &tr, &f).
 		SetSubject("SUBJ-001", "001", types.SUBJECT_ROLE_ENROLLED).
 		SetSubjectDemographics("JDO", "PAT-001", types.GENDER_MALE, "19800101", types.RACE_WHITE)
 
