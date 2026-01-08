@@ -97,7 +97,7 @@ func TestCompleteWorkflow_FullECG(t *testing.T) {
 		types.MDC_ECG_LEAD_V1: {0, -1, -2, -3, -4, -5, -6, -7, -8, -9},
 	}
 
-	h.AddRhythmSeries("20231223120000.000", "20231223120010.000", 500.0, leads, 0.0, 5.0)
+	h.AddRhythmSeries("20231223120000.000", "20231223120010.000", nil, nil, 500.0, leads, 0.0, 5.0)
 
 	// Add representative beat series
 	repLeads := map[types.LeadCode][]int{
@@ -411,8 +411,8 @@ func TestMultipleSeries(t *testing.T) {
 		types.MDC_ECG_LEAD_V1: {11, 12, 13, 14, 15},
 	}
 
-	h.AddRhythmSeries("20231223120000.000", "20231223120010.000", 500.0, leads1, 0.0, 5.0).
-		AddRhythmSeries("20231223120030.000", "20231223120040.000", 500.0, leads2, 0.0, 5.0).
+	h.AddRhythmSeries("20231223120000.000", "20231223120010.000", nil, nil, 500.0, leads1, 0.0, 5.0).
+		AddRhythmSeries("20231223120030.000", "20231223120040.000", nil, nil, 500.0, leads2, 0.0, 5.0).
 		AddRepresentativeBeatSeries("20231223120050.000", "20231223120051.000", 500.0, leads3, 0.0, 5.0)
 
 	// Should have 3 series

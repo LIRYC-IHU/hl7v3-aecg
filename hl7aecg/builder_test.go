@@ -314,7 +314,7 @@ func TestAddRhythmSeries(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewHl7xml("/tmp/test").Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
-			result := h.AddRhythmSeries(tt.startTime, tt.endTime, tt.sampleRate, tt.leads, tt.origin, tt.scale)
+			result := h.AddRhythmSeries(tt.startTime, tt.endTime, nil, nil, tt.sampleRate, tt.leads, tt.origin, tt.scale)
 
 			if result == nil {
 				t.Errorf("AddRhythmSeries() returned nil")
@@ -620,7 +620,7 @@ func TestAddSecondaryPerformer(t *testing.T) {
 	leads := map[types.LeadCode][]int{
 		types.MDC_ECG_LEAD_I: {1, 2, 3},
 	}
-	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", nil, nil, 500, leads, 0, 5)
 
 	// Add secondary performer
 	h.AddSecondaryPerformer(types.PERFORMER_ECG_TECHNICIAN, "", "", "")
@@ -660,7 +660,7 @@ func TestAddSecondaryPerformer_WithDetails(t *testing.T) {
 	leads := map[types.LeadCode][]int{
 		types.MDC_ECG_LEAD_I: {1, 2, 3},
 	}
-	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", nil, nil, 500, leads, 0, 5)
 
 	// Add secondary performer with details
 	h.AddSecondaryPerformer(types.PERFORMER_HOLTER_ANALYST, "2.16.840.1.113883.3.4", "TECH-221", "KAB")
@@ -698,7 +698,7 @@ func TestAddSecondaryPerformer_MultiplePerformers(t *testing.T) {
 	leads := map[types.LeadCode][]int{
 		types.MDC_ECG_LEAD_I: {1, 2, 3},
 	}
-	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", 500, leads, 0, 5)
+	h.AddRhythmSeries("20021122091000.000", "20021122091010.000", nil, nil, 500, leads, 0, 5)
 
 	// Add multiple secondary performers
 	h.AddSecondaryPerformer(types.PERFORMER_HOLTER_HOOKUP, "", "", "Tech1").
