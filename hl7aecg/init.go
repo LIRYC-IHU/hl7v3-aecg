@@ -2,6 +2,7 @@ package hl7aecg
 
 import (
 	"context"
+	stdxml "encoding/xml"
 	"fmt"
 	"os"
 
@@ -50,7 +51,12 @@ func (h *Hl7xml) String() (string, error) {
 
 func (h *Hl7xml) Test() (*Hl7xml, error) {
 	dir := "/tmp/hl7aecg_example.xml"
-	data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
+
+	// DEBUG: Try standard Go XML marshalling to see if MarshalXML is called
+	// Use standard encoding/xml package instead of github.com/ECUST-XX/xml
+	data, err := stdxml.MarshalIndent(h.HL7AEcg, "", "  ")
+
+	//data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
 	if err != nil {
 		return h, err
 	}

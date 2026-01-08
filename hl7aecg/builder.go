@@ -1,6 +1,7 @@
 package hl7aecg
 
 import (
+	"slices"
 	"strconv"
 
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
@@ -107,7 +108,10 @@ func (h *Hl7xml) buildSeries(
 			Value: &types.SequenceValue{
 				XsiType: "GLIST_TS",
 				Typed: &types.GLIST_TS{
-					Head: startTime,
+					Head: types.HeadTimestamp{
+						Value: startTime,
+						Unit:  "s",
+					},
 					Increment: types.Increment{
 						Value: formatFloat(increment),
 						Unit:  "s",
@@ -121,10 +125,39 @@ func (h *Hl7xml) buildSeries(
 	timeSeq.Sequence.Code.Time.SetCode(types.TIME_ABSOLUTE_CODE, types.HL7_ActCode_OID, "ActCode", "")
 	sequenceSet.Component = append(sequenceSet.Component, timeSeq)
 
-	// Add lead sequences
+	// Add lead sequences in the standard medical order:
+	// Limb leads: I, II, III
+	// Augmented leads: aVR, aVL, aVF
+	// Precordial leads: V1, V2, V3, V4, V5, V6
+	standardOrder := []types.LeadCode{
+		types.MDC_ECG_LEAD_I,
+		types.MDC_ECG_LEAD_II,
+		types.MDC_ECG_LEAD_III,
+		types.MDC_ECG_LEAD_AVR,
+		types.MDC_ECG_LEAD_AVL,
+		types.MDC_ECG_LEAD_AVF,
+		types.MDC_ECG_LEAD_V1,
+		types.MDC_ECG_LEAD_V2,
+		types.MDC_ECG_LEAD_V3,
+		types.MDC_ECG_LEAD_V4,
+		types.MDC_ECG_LEAD_V5,
+		types.MDC_ECG_LEAD_V6,
+	}
+
+	// Iterate in standard order, only adding leads that are present in the map
+	for _, leadCode := range standardOrder {
+		if samples, exists := leads[leadCode]; exists {
+			leadSeq := h.buildLeadSequence(leadCode, samples, origin, scale)
+			sequenceSet.Component = append(sequenceSet.Component, leadSeq)
+		}
+	}
+
+	// Add any remaining leads that aren't in the standard 12-lead set
 	for leadCode, samples := range leads {
-		leadSeq := h.buildLeadSequence(leadCode, samples, origin, scale)
-		sequenceSet.Component = append(sequenceSet.Component, leadSeq)
+		if !slices.Contains(standardOrder, leadCode) {
+			leadSeq := h.buildLeadSequence(leadCode, samples, origin, scale)
+			sequenceSet.Component = append(sequenceSet.Component, leadSeq)
+		}
 	}
 
 	series.Component = []types.SeriesComponent{
