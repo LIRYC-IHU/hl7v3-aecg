@@ -137,6 +137,53 @@ type SequenceCode struct {
 	Lead *Code[LeadCode, CodeSystemOID]         `xml:",omitempty"`
 }
 
+// MarshalXML handles encoding of SequenceCode to avoid the wrapper element.
+// Instead of <code><Time .../></code>, we want <code code="..." .../>
+func (sc SequenceCode) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	start.Name = xml.Name{Local: "code"}
+
+	// Serialize Time or Lead directly under the "code" element name
+	// This flattens the structure from <code><Time code="..."/></code> to <code code="..."/>
+	if sc.Time != nil {
+		return e.EncodeElement(sc.Time, start)
+	}
+	if sc.Lead != nil {
+		return e.EncodeElement(sc.Lead, start)
+	}
+
+	// Empty code element
+	return e.EncodeElement("", start)
+}
+
+// UnmarshalXML handles decoding of SequenceCode from the flat structure.
+func (sc *SequenceCode) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	// Check if there's a "code" attribute to determine the type
+	var codeAttr string
+	for _, attr := range start.Attr {
+		if attr.Name.Local == "code" {
+			codeAttr = attr.Value
+			break
+		}
+	}
+
+	// Determine if it's a time sequence or lead sequence based on the code value
+	// Time sequences: TIME_ABSOLUTE, TIME_RELATIVE
+	// Lead sequences: MDC_ECG_LEAD_*
+	if codeAttr == string(TIME_ABSOLUTE_CODE) || codeAttr == string(TIME_RELATIVE_CODE) {
+		sc.Time = &Code[TimeSequenceCode, CodeSystemOID]{}
+		return d.DecodeElement(sc.Time, &start)
+	} else if len(codeAttr) >= 7 && codeAttr[:7] == "MDC_ECG" {
+		sc.Lead = &Code[LeadCode, CodeSystemOID]{}
+		return d.DecodeElement(sc.Lead, &start)
+	} else if len(codeAttr) >= 3 && codeAttr[:3] == "MDC" {
+		sc.Lead = &Code[LeadCode, CodeSystemOID]{}
+		return d.DecodeElement(sc.Lead, &start)
+	}
+
+	// Unknown code type, skip
+	return d.Skip()
+}
+
 // SequenceValue represents the polymorphic value field in a Sequence.
 //
 // This can contain:
@@ -197,9 +244,9 @@ type GLIST_TS struct {
 	//
 	// Example: "20021122091000.000" = Nov 22, 2002 at 09:10:00.000
 	//
-	// XML Tag: <head value="..."/>
+	// XML Tag: <head value="..." unit="..."/>
 	// Cardinality: Required
-	Head string `xml:"head"`
+	Head HeadTimestamp `xml:"head"`
 
 	// Increment is the time interval between samples.
 	//
@@ -214,6 +261,27 @@ type GLIST_TS struct {
 	// XML Tag: <increment value="..." unit="..."/>
 	// Cardinality: Required
 	Increment Increment `xml:"increment"`
+}
+
+// HeadTimestamp represents the head timestamp in GLIST_TS with value and unit.
+//
+// XML Structure: <head value="20021122091000.000" unit="s"/>
+//
+// Cardinality: Required (within GLIST_TS)
+type HeadTimestamp struct {
+	// Value is the timestamp value in HL7 format (YYYYMMDDHHmmss.SSS).
+	//
+	// Example: "20250923103550"
+	//
+	// XML Tag: value="..."
+	// Cardinality: Required
+	Value string `xml:"value,attr"`
+
+	// Unit is the unit of time (typically "s" for seconds).
+	//
+	// XML Tag: unit="..."
+	// Cardinality: Optional (defaults to "s")
+	Unit string `xml:"unit,attr,omitempty"`
 }
 
 // Increment represents a time increment with value and unit.

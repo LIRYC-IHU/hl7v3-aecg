@@ -364,10 +364,10 @@ func TestGLIST_TS_XMLMarshal(t *testing.T) {
 		{
 			name: "Complete GLIST_TS",
 			glist: GLIST_TS{
-				Head:      "20231223120000.000",
+				Head:      HeadTimestamp{Value: "20231223120000.000", Unit: "s"},
 				Increment: Increment{Value: "0.002", Unit: "s"},
 			},
-			wantXML: `<GLIST_TS><head>20231223120000.000</head><increment value="0.002" unit="s"></increment></GLIST_TS>`,
+			wantXML: `<GLIST_TS><head value="20231223120000.000" unit="s"></head><increment value="0.002" unit="s"></increment></GLIST_TS>`,
 		},
 	}
 
@@ -399,7 +399,7 @@ func TestSequenceValue_UnmarshalXML(t *testing.T) {
 	}{
 		{
 			name:     "Unmarshal GLIST_TS",
-			xmlData:  `<value xsi:type="GLIST_TS"><head>20231223120000.000</head><increment value="0.002" unit="s"/></value>`,
+			xmlData:  `<value xsi:type="GLIST_TS"><head value="20231223120000.000" unit="s"/><increment value="0.002" unit="s"/></value>`,
 			wantType: "GLIST_TS",
 			wantErr:  false,
 			validateFn: func(t *testing.T, sv *SequenceValue) {
@@ -408,8 +408,8 @@ func TestSequenceValue_UnmarshalXML(t *testing.T) {
 					t.Errorf("Expected *GLIST_TS, got %T", sv.Typed)
 					return
 				}
-				if glist.Head != "20231223120000.000" {
-					t.Errorf("Head = %v, want %v", glist.Head, "20231223120000.000")
+				if glist.Head.Value != "20231223120000.000" {
+					t.Errorf("Head.Value = %v, want %v", glist.Head.Value, "20231223120000.000")
 				}
 			},
 		},
