@@ -1,6 +1,7 @@
 package hl7aecg
 
 import (
+	"log"
 	"slices"
 	"strconv"
 
@@ -76,6 +77,177 @@ func (h *Hl7xml) AddRepresentativeBeatSeries(
 
 	h.HL7AEcg.Component = append(h.HL7AEcg.Component, types.Component{Series: *series})
 	return h
+}
+
+// AddDerivedSeries creates and adds a derived series to the most recently added parent series.
+//
+// Derived series represent waveforms computed from the parent series using algorithms
+// (e.g., representative beats, median beats, filtered waveforms).
+//
+// Key differences from rhythm series:
+//   - Uses TIME_RELATIVE (not TIME_ABSOLUTE) for time sequences
+//   - Time starts at 0 (relative to beat/segment start)
+//   - Nested within parent series via <derivation> element
+//
+// Parameters:
+//   - seriesCode: Type of derived series (REPRESENTATIVE_BEAT_CODE or MEDIAN_BEAT_CODE)
+//   - startTime: Start timestamp in parent's time reference (e.g., "20250923103550")
+//   - endTime: End timestamp in parent's time reference
+//   - startTimeLowInclusive: Low time inclusive flag
+//   - endTimeHighInclusive: High time inclusive flag
+//   - sampleRate: Sampling rate in Hz (e.g., 500 for 500 Hz)
+//   - leads: Map of lead codes to their raw sample data
+//   - origin: Baseline voltage value (typically 0)
+//   - scale: Voltage resolution per digit (e.g., 5 for 5 µV)
+//
+// Example:
+//
+//	h.AddRhythmSeries(...).
+//	  AddDerivedSeries(
+//	    types.REPRESENTATIVE_BEAT_CODE,
+//	    "20250923103550", "20250923103600",
+//	    types.BoolPtr(true), types.BoolPtr(false),
+//	    500, repBeatLeads, 0, 5)
+//
+// Returns the Hl7xml instance for method chaining.
+func (h *Hl7xml) AddDerivedSeries(
+	seriesCode types.SeriesTypeCode,
+	startTime, endTime string,
+	startTimeLowInclusive, endTimeHighInclusive *bool,
+	sampleRate float64,
+	leads map[types.LeadCode][]int,
+	origin, scale float64,
+) *Hl7xml {
+	if len(h.HL7AEcg.Component) == 0 {
+		log.Println("Warning: No parent series found. Create a rhythm series first.")
+		return h
+	}
+
+	// Build derived series structure
+	derivedSeries := h.buildDerivedSeries(
+		seriesCode,
+		startTime,
+		endTime,
+		startTimeLowInclusive,
+		endTimeHighInclusive,
+		sampleRate,
+		leads,
+		origin,
+		scale,
+	)
+
+	// Add to most recent parent series
+	lastComponent := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1]
+	lastComponent.Series.Derivation = append(lastComponent.Series.Derivation, types.Derivation{
+		DerivedSeries: *derivedSeries,
+	})
+
+	return h
+}
+
+// buildDerivedSeries constructs a Series for derived waveforms with TIME_RELATIVE.
+//
+// Similar to buildSeries but:
+//  1. Uses TIME_RELATIVE_CODE instead of TIME_ABSOLUTE_CODE
+//  2. Uses GLIST_PQ instead of GLIST_TS for time sequence
+//  3. Time starts at 0.000 (relative to beat/segment onset)
+//  4. effectiveTime still uses absolute timestamps (when the beat occurred)
+func (h *Hl7xml) buildDerivedSeries(
+	seriesType types.SeriesTypeCode,
+	startTime, endTime string,
+	startTimeLowInclusive, endTimeHighInclusive *bool,
+	sampleRate float64,
+	leads map[types.LeadCode][]int,
+	origin, scale float64,
+) *types.Series {
+	series := &types.Series{
+		ID:   &types.ID{},
+		Code: &types.Code[types.SeriesTypeCode, types.CodeSystemOID]{},
+		EffectiveTime: types.EffectiveTime{
+			Low: types.Time{
+				Value:     startTime,
+				Inclusive: startTimeLowInclusive,
+			},
+			High: types.Time{
+				Value:     endTime,
+				Inclusive: endTimeHighInclusive,
+			},
+		},
+	}
+	series.Code.SetCode(seriesType, types.HL7_ActCode_OID, "ActCode", "")
+
+	// Calculate increment (1 / sample rate)
+	increment := 1.0 / sampleRate
+
+	sequenceSet := types.SequenceSet{}
+
+	// Add TIME_RELATIVE sequence with GLIST_PQ
+	// Time starts at 0.000 (relative to beat/segment start)
+	timeSeq := types.SequenceComponent{
+		Sequence: types.Sequence{
+			Code: types.SequenceCode{
+				Time: &types.Code[types.TimeSequenceCode, types.CodeSystemOID]{},
+			},
+			Value: &types.SequenceValue{
+				XsiType: "GLIST_PQ",
+				Typed: &types.GLIST_PQ{
+					Head: types.PhysicalQuantity{
+						Value: "0.000",
+						Unit:  "s",
+					},
+					Increment: types.PhysicalQuantity{
+						Value: formatFloat(increment),
+						Unit:  "s",
+					},
+				},
+			},
+		},
+	}
+	timeSeq.Sequence.Code.Time.SetCode(
+		types.TIME_RELATIVE_CODE,
+		types.HL7_ActCode_OID,
+		"ActCode",
+		"Relative Time",
+	)
+	sequenceSet.Component = append(sequenceSet.Component, timeSeq)
+
+	// Add lead sequences in standard medical order (same as buildSeries)
+	standardOrder := []types.LeadCode{
+		types.MDC_ECG_LEAD_I,
+		types.MDC_ECG_LEAD_II,
+		types.MDC_ECG_LEAD_III,
+		types.MDC_ECG_LEAD_AVR,
+		types.MDC_ECG_LEAD_AVL,
+		types.MDC_ECG_LEAD_AVF,
+		types.MDC_ECG_LEAD_V1,
+		types.MDC_ECG_LEAD_V2,
+		types.MDC_ECG_LEAD_V3,
+		types.MDC_ECG_LEAD_V4,
+		types.MDC_ECG_LEAD_V5,
+		types.MDC_ECG_LEAD_V6,
+	}
+
+	// Iterate in standard order, only adding leads that are present in the map
+	for _, leadCode := range standardOrder {
+		if samples, exists := leads[leadCode]; exists {
+			leadSeq := h.buildLeadSequence(leadCode, samples, origin, scale)
+			sequenceSet.Component = append(sequenceSet.Component, leadSeq)
+		}
+	}
+
+	// Add any remaining leads that aren't in the standard 12-lead set
+	for leadCode, samples := range leads {
+		if !slices.Contains(standardOrder, leadCode) {
+			leadSeq := h.buildLeadSequence(leadCode, samples, origin, scale)
+			sequenceSet.Component = append(sequenceSet.Component, leadSeq)
+		}
+	}
+
+	series.Component = []types.SeriesComponent{
+		{SequenceSet: sequenceSet},
+	}
+
+	return series
 }
 
 // buildSeries constructs a Series with sequences for time and leads.

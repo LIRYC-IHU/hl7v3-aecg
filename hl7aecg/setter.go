@@ -170,3 +170,58 @@ func (h *Hl7xml) SetSeriesCode(code types.SeriesTypeCode, codeSystem types.CodeS
 
 	return nil
 }
+
+// SetDerivedSeriesCode updates the series code for the most recently added derived series
+// in the most recent parent series.
+//
+// Example:
+//
+//	h.AddDerivedSeries(...).
+//	  SetDerivedSeriesCode(types.REPRESENTATIVE_BEAT_CODE, types.HL7_ActCode_OID, "ActCode", "Representative Beat")
+func (h *Hl7xml) SetDerivedSeriesCode(
+	code types.SeriesTypeCode,
+	codeSystem types.CodeSystemOID,
+	codeSystemName, displayName string,
+) error {
+	if len(h.HL7AEcg.Component) == 0 {
+		return fmt.Errorf("no parent series found")
+	}
+
+	lastSeries := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1].Series
+	if len(lastSeries.Derivation) == 0 {
+		return fmt.Errorf("no derived series found in parent series")
+	}
+
+	// Update most recent derived series
+	lastDerived := &lastSeries.Derivation[len(lastSeries.Derivation)-1].DerivedSeries
+	lastDerived.Code.SetCode(code, codeSystem, codeSystemName, displayName)
+	return nil
+}
+
+// SetDerivedSeriesID sets the ID for the most recently added derived series.
+//
+// Parameters:
+//   - root: OID root (use "" to inherit from parent document)
+//   - extension: Extension identifier (e.g., "derivedSeries", "representativeBeat1")
+//
+// Example:
+//
+//	h.SetDerivedSeriesID("", "derivedSeries")
+func (h *Hl7xml) SetDerivedSeriesID(root, extension string) error {
+	if len(h.HL7AEcg.Component) == 0 {
+		return fmt.Errorf("no parent series found")
+	}
+
+	lastSeries := &h.HL7AEcg.Component[len(h.HL7AEcg.Component)-1].Series
+	if len(lastSeries.Derivation) == 0 {
+		return fmt.Errorf("no derived series found in parent series")
+	}
+
+	// Update most recent derived series
+	lastDerived := &lastSeries.Derivation[len(lastSeries.Derivation)-1].DerivedSeries
+	if lastDerived.ID == nil {
+		lastDerived.ID = &types.ID{}
+	}
+	lastDerived.ID.SetID(root, extension)
+	return nil
+}

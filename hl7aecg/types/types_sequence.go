@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -310,6 +311,87 @@ type Increment struct {
 }
 
 // =============================================================================
+// GLIST_PQ - Generated List of Physical Quantities
+// =============================================================================
+
+// GLIST_PQ represents a generated list of physical quantities.
+//
+// Similar to GLIST_TS but uses PhysicalQuantity for head/increment.
+// Used for TIME_RELATIVE sequences in derived series (representative beats).
+//
+// The head value starts at 0 for relative time (start of beat/segment).
+// The increment specifies the time between samples.
+//
+// Example: Relative time sequence for 500 Hz sampling
+//
+//	<value xsi:type="GLIST_PQ">
+//	  <head value="0.000" unit="s"/>
+//	  <increment value="0.002" unit="s"/>
+//	</value>
+//
+// This generates relative timestamps:
+//   - 0.000 (head)
+//   - 0.002 (head + 1*increment)
+//   - 0.004 (head + 2*increment)
+//   - ... (for the length of the sequence)
+//
+// XML Attribute: xsi:type="GLIST_PQ"
+// Reference: HL7 aECG Implementation Guide
+type GLIST_PQ struct {
+	// Head is the first value in the sequence.
+	//
+	// For relative time, typically "0.000" or "0" (start of beat/segment).
+	//
+	// XML Tag: <head value="..." unit="..."/>
+	// Cardinality: Required
+	Head PhysicalQuantity `xml:"head"`
+
+	// Increment is the interval between samples.
+	//
+	// Example: "0.002" with unit="s" for 500 Hz sampling rate
+	//
+	// XML Tag: <increment value="..." unit="..."/>
+	// Cardinality: Required
+	Increment PhysicalQuantity `xml:"increment"`
+}
+
+// GetValues calculates all values in the GLIST_PQ given a length.
+//
+// Returns an array of float64 values: [head, head+inc, head+2*inc, ...]
+//
+// Parameters:
+//   - length: Number of values to generate
+//
+// Returns:
+//   - []float64: Array of calculated values
+//   - error: Error if head or increment values cannot be parsed
+//
+// Example:
+//
+//	glistPq := &GLIST_PQ{
+//	    Head: PhysicalQuantity{Value: "0.000", Unit: "s"},
+//	    Increment: PhysicalQuantity{Value: "0.002", Unit: "s"},
+//	}
+//	values, err := glistPq.GetValues(500) // Generate 500 values
+func (g *GLIST_PQ) GetValues(length int) ([]float64, error) {
+	headVal, err := strconv.ParseFloat(g.Head.Value, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid head value: %w", err)
+	}
+
+	incVal, err := strconv.ParseFloat(g.Increment.Value, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid increment value: %w", err)
+	}
+
+	values := make([]float64, length)
+	for i := 0; i < length; i++ {
+		values[i] = headVal + float64(i)*incVal
+	}
+	return values, nil
+}
+
+// =============================================================================
 // SLIST_PQ - Scaled List of Physical Quantities
 // =============================================================================
 
@@ -586,6 +668,12 @@ func (sv *SequenceValue) UnmarshalXML(d *xml.Decoder, start xml.StartElement) er
 			return err
 		}
 		sv.Typed = &v
+	case "GLIST_PQ":
+		var v GLIST_PQ
+		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
+			return err
+		}
+		sv.Typed = &v
 	case "SLIST_PQ":
 		var v SLIST_PQ
 		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
@@ -621,6 +709,8 @@ func (sv *SequenceValue) MarshalXML(e *xml.Encoder, start xml.StartElement) erro
 	switch sv.XsiType {
 	case "GLIST_TS":
 		inner, _ = sv.Typed.(*GLIST_TS)
+	case "GLIST_PQ":
+		inner, _ = sv.Typed.(*GLIST_PQ)
 	case "SLIST_PQ":
 		inner, _ = sv.Typed.(*SLIST_PQ)
 	case "SLIST_INT":

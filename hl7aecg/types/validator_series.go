@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"fmt"
 )
 
 // Validate validates the Series structure.
@@ -46,6 +47,16 @@ func (s *Series) Validate(ctx context.Context, vctx *ValidationContext) error {
 	for i := range s.ControlVariable {
 		if err := s.ControlVariable[i].Validate(ctx, vctx); err != nil {
 			return err
+		}
+	}
+
+	// Derivation is optional but must be valid if present
+	for i, deriv := range s.Derivation {
+		if err := deriv.Validate(ctx, vctx); err != nil {
+			vctx.AddError(NewValidationError(
+				fmt.Sprintf("Series.Derivation[%d]", i),
+				fmt.Sprintf("Derivation validation failed: %v", err),
+			))
 		}
 	}
 
@@ -244,6 +255,66 @@ func (cvc *ControlVariableComponent) Validate(ctx context.Context, vctx *Validat
 	if cvc.ControlVariable != nil {
 		if err := cvc.ControlVariable.Validate(ctx, vctx); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// Validate validates the Derivation structure.
+//
+// Checks:
+//   - DerivedSeries is valid
+//   - DerivedSeries code is appropriate (REPRESENTATIVE_BEAT or MEDIAN_BEAT)
+//   - DerivedSeries does not have nested derivation (no recursive derivation)
+//   - DerivedSeries uses TIME_RELATIVE for time sequences
+func (d *Derivation) Validate(ctx context.Context, vctx *ValidationContext) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	// Validate derived series structure
+	if err := d.DerivedSeries.Validate(ctx, vctx); err != nil {
+		return err
+	}
+
+	// Validate code is appropriate for derived series
+	if d.DerivedSeries.Code != nil {
+		code := d.DerivedSeries.Code.Code
+		if code != REPRESENTATIVE_BEAT_CODE && code != MEDIAN_BEAT_CODE {
+			vctx.AddError(NewValidationError(
+				"Derivation.DerivedSeries.Code",
+				fmt.Sprintf("Derived series code must be REPRESENTATIVE_BEAT or MEDIAN_BEAT, got: %s", code),
+			))
+		}
+	}
+
+	// Validate no nested derivation (derived series cannot have derivation)
+	if len(d.DerivedSeries.Derivation) > 0 {
+		vctx.AddError(NewValidationError(
+			"Derivation.DerivedSeries.Derivation",
+			"Derived series cannot have nested derivation (recursive derivation not allowed)",
+		))
+	}
+
+	// Validate time sequences use TIME_RELATIVE
+	if len(d.DerivedSeries.Component) > 0 {
+		for i, comp := range d.DerivedSeries.Component {
+			seqSet := comp.SequenceSet
+			if len(seqSet.Component) > 0 {
+				// First sequence should be time
+				firstSeq := seqSet.Component[0].Sequence
+				if firstSeq.Code.Time != nil {
+					if firstSeq.Code.Time.Code != TIME_RELATIVE_CODE {
+						vctx.AddError(NewValidationError(
+							fmt.Sprintf("Derivation.DerivedSeries.Component[%d].SequenceSet", i),
+							fmt.Sprintf("Derived series must use TIME_RELATIVE for time sequences, got: %s", firstSeq.Code.Time.Code),
+						))
+					}
+				}
+			}
 		}
 	}
 

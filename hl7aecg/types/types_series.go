@@ -129,6 +129,18 @@ type Series struct {
 	// Cardinality: Optional (0..*)
 	ControlVariable []ControlVariable `xml:"controlVariable,omitempty"`
 
+	// Derivation contains derived series computed from this series.
+	//
+	// Used when this series has child series derived from it via algorithms.
+	// Example: Representative beat waveforms derived from rhythm series
+	//
+	// Multiple derivations can exist (e.g., different time segments, different algorithms).
+	//
+	// XML Tag: <derivation>...</derivation>
+	// Cardinality: Optional (0..*)
+	// Reference: HL7 aECG Implementation Guide
+	Derivation []Derivation `xml:"derivation,omitempty"`
+
 	// Component contains the sequence sets with actual waveform data.
 	//
 	// XML Tag: <component>...</component>
@@ -543,4 +555,38 @@ type SeriesComponent struct {
 	// XML Tag: <sequenceSet>...</sequenceSet>
 	// Cardinality: Required
 	SequenceSet SequenceSet `xml:"sequenceSet"`
+}
+
+// Derivation wraps a DerivedSeries to provide the correct XML structure.
+//
+// A series can have multiple derivations representing different algorithms
+// or different segments of the parent series.
+//
+// XML Structure:
+//
+//	<derivation>
+//	  <derivedSeries>
+//	    <id root="..." extension="..."/>
+//	    <code code="REPRESENTATIVE_BEAT" codeSystem="2.16.840.1.113883.5.4"/>
+//	    <effectiveTime>
+//	      <low value="20250923103550" inclusive="true"/>
+//	      <high value="20250923103600" inclusive="false"/>
+//	    </effectiveTime>
+//	    <component>
+//	      <sequenceSet>...</sequenceSet>
+//	    </component>
+//	  </derivedSeries>
+//	</derivation>
+//
+// Cardinality: Optional (within Series, 0..*)
+// Reference: HL7 aECG Implementation Guide, Page 26-27
+type Derivation struct {
+	// DerivedSeries contains the series derived from the parent series.
+	//
+	// Has the same structure as Series but uses TIME_RELATIVE for time sequences
+	// and should not have nested derivations.
+	//
+	// XML Tag: <derivedSeries>...</derivedSeries>
+	// Cardinality: Required (within Derivation)
+	DerivedSeries Series `xml:"derivedSeries"`
 }

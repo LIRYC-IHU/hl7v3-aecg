@@ -37,3 +37,48 @@ func (s *Series) SetSeriesCode(code SeriesTypeCode, codeSystem CodeSystemOID, co
 	}
 	return s
 }
+
+// SetDerivedSeriesCode sets the code for the most recently added derived series.
+//
+// This method updates the series code of the last derived series added to this series.
+//
+// Parameters:
+//   - code: The code value (e.g., "REPRESENTATIVE_BEAT", "MEDIAN_BEAT")
+//   - codeSystem: The OID of the code system
+//   - codeSystemName: Human-readable name of the code system
+//   - displayName: Human-readable name of the code
+//
+// Returns the Series pointer for method chaining.
+func (s *Series) SetDerivedSeriesCode(
+	code SeriesTypeCode,
+	codeSystem CodeSystemOID,
+	codeSystemName, displayName string,
+) *Series {
+	if len(s.Derivation) == 0 {
+		return s
+	}
+	lastDerived := &s.Derivation[len(s.Derivation)-1].DerivedSeries
+	lastDerived.Code.SetCode(code, codeSystem, codeSystemName, displayName)
+	return s
+}
+
+// SetDerivedSeriesID sets the ID for the most recently added derived series.
+//
+// This method updates the ID of the last derived series added to this series.
+//
+// Parameters:
+//   - root: OID root (can be empty to inherit from document)
+//   - extension: Extension identifier (e.g., "derivedSeries", "representativeBeat1")
+//
+// Returns the Series pointer for method chaining.
+func (s *Series) SetDerivedSeriesID(root, extension string) *Series {
+	if len(s.Derivation) == 0 {
+		return s
+	}
+	lastDerived := &s.Derivation[len(s.Derivation)-1].DerivedSeries
+	if lastDerived.ID == nil {
+		lastDerived.ID = &ID{}
+	}
+	lastDerived.ID.SetID(root, extension)
+	return s
+}
