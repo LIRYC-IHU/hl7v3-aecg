@@ -38,6 +38,11 @@ func NewHl7xml(outputDir string) *Hl7xml {
 func (h *Hl7xml) Initialize(code types.CPT_CODE, codeSystem types.CodeSystemOID, codeSystemName, displayName string) *Hl7xml {
 	fmt.Println("Initialize HL7 aECG document")
 	h.HL7AEcg.Code.SetCode(code, codeSystem, codeSystemName, displayName)
+
+	// Set required HL7 v3 RIM attributes for schema validation
+	h.HL7AEcg.Type = "Observation"
+	h.HL7AEcg.SchemaLocation = "urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"
+
 	return h
 }
 
