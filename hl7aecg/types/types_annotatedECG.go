@@ -41,6 +41,16 @@ type HL7AEcg struct {
 	XmlnsVoc string `xml:"xmlns:voc,attr"`
 	XmlnsXsi string `xml:"xmlns:xsi,attr"`
 
+	// Type specifies the HL7 v3 RIM class type for this clinical document.
+	// Required for XML schema validation against PORT_MT020001.xsd.
+	// Always set to "Observation" per HL7 v3 RIM specification.
+	Type string `xml:"type,attr"`
+
+	// SchemaLocation specifies the path to the HL7 aECG XML schema file.
+	// Required for XML schema validation. Uses xsi namespace prefix.
+	// Default: "urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"
+	SchemaLocation string `xml:"xsi:schemaLocation,attr"`
+
 	// ID is the unique identifier for this aECG document.
 	// Must be globally unique using UUID.
 	//
