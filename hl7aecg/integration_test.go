@@ -427,6 +427,78 @@ func TestRootAttributes(t *testing.T) {
 	}
 }
 
+// TestSequenceRIMAttributes tests that ClassCode and MoodCode appear on all sequence elements
+func TestSequenceRIMAttributes(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create document with rhythm series
+	h := NewHl7xml(tmpDir)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+	h.HL7AEcg.SetRootID("2.16.840.1.113883.3.1", "")
+	h.HL7AEcg.ID.SetID("", "TEST-SEQ-RIM-001")
+	h.HL7AEcg.ConfidentialityCode.SetCode(types.CONFIDENTIALITY_SPONSOR_BLINDED, "", "", "")
+	h.HL7AEcg.ReasonCode.SetCode(types.REASON_PER_PROTOCOL, "", "", "")
+	h.SetEffectiveTime("20231223120000.000", "20231223120010.000", &tr, &f).
+		SetSubject("", "SUBJ-001", types.SUBJECT_ROLE_ENROLLED)
+
+	// Add series with multiple leads
+	leads := map[types.LeadCode][]int{
+		types.MDC_ECG_LEAD_I:  {1, 2, 3, 4, 5},
+		types.MDC_ECG_LEAD_II: {6, 7, 8, 9, 10},
+		types.MDC_ECG_LEAD_V1: {11, 12, 13, 14, 15},
+	}
+	h.AddRhythmSeries("20231223120000.000", "20231223120010.000", nil, nil, 500.0, leads, 0.0, 5.0)
+
+	// Marshal to XML
+	xmlData, err := xml.MarshalIndent(&h.HL7AEcg, "", "  ")
+	if err != nil {
+		t.Fatalf("Failed to marshal XML: %v", err)
+	}
+
+	xmlString := string(xmlData)
+
+	// Verify classCode and moodCode appear on sequence elements
+	// Should have: 1 time sequence + 3 lead sequences = 4 total sequences
+	if !strings.Contains(xmlString, `classCode="OBS"`) {
+		t.Error("XML output missing classCode=\"OBS\" on sequence elements")
+	}
+	if !strings.Contains(xmlString, `moodCode="EVN"`) {
+		t.Error("XML output missing moodCode=\"EVN\" on sequence elements")
+	}
+
+	// Count occurrences of <sequence classCode="OBS" moodCode="EVN"
+	// (attribute order may vary, so check for both attributes present)
+	classCodeCount := strings.Count(xmlString, `classCode="OBS"`)
+	moodCodeCount := strings.Count(xmlString, `moodCode="EVN"`)
+
+	// We expect 4 sequences (1 time + 3 leads)
+	if classCodeCount != 4 {
+		t.Errorf("Expected 4 sequences with classCode=\"OBS\", found %d", classCodeCount)
+	}
+	if moodCodeCount != 4 {
+		t.Errorf("Expected 4 sequences with moodCode=\"EVN\", found %d", moodCodeCount)
+	}
+
+	// Verify both time and lead sequences have attributes
+	// TIME_ABSOLUTE sequence should have RIM attributes
+	timeSeqPattern := `TIME_ABSOLUTE`
+	if !strings.Contains(xmlString, timeSeqPattern) {
+		t.Error("XML missing TIME_ABSOLUTE sequence")
+	}
+
+	// Lead sequences should have RIM attributes
+	leadSeqPatterns := []string{
+		`MDC_ECG_LEAD_I`,
+		`MDC_ECG_LEAD_II`,
+		`MDC_ECG_LEAD_V1`,
+	}
+	for _, pattern := range leadSeqPatterns {
+		if !strings.Contains(xmlString, pattern) {
+			t.Errorf("XML missing lead sequence: %s", pattern)
+		}
+	}
+}
+
 // TestMultipleSeries tests adding multiple ECG series
 func TestMultipleSeries(t *testing.T) {
 	tmpDir := t.TempDir()
