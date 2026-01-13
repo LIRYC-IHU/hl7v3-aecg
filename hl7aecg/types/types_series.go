@@ -129,6 +129,12 @@ type Series struct {
 	// Cardinality: Optional (0..*)
 	ControlVariable []ControlVariable `xml:"controlVariable,omitempty"`
 
+	// Component contains the sequence sets with actual waveform data.
+	//
+	// XML Tag: <component>...</component>
+	// Cardinality: Required (1..*)
+	Component []SeriesComponent `xml:"component"`
+
 	// Derivation contains derived series computed from this series.
 	//
 	// Used when this series has child series derived from it via algorithms.
@@ -140,12 +146,6 @@ type Series struct {
 	// Cardinality: Optional (0..*)
 	// Reference: HL7 aECG Implementation Guide
 	Derivation []Derivation `xml:"derivation,omitempty"`
-
-	// Component contains the sequence sets with actual waveform data.
-	//
-	// XML Tag: <component>...</component>
-	// Cardinality: Required (1..*)
-	Component []SeriesComponent `xml:"component"`
 }
 
 func NewSeries() *Series {
