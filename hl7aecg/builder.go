@@ -185,6 +185,8 @@ func (h *Hl7xml) buildDerivedSeries(
 	// Time starts at 0.000 (relative to beat/segment start)
 	timeSeq := types.SequenceComponent{
 		Sequence: types.Sequence{
+			ClassCode: "OBS",
+			MoodCode:  "EVN",
 			Code: types.SequenceCode{
 				Time: &types.Code[types.TimeSequenceCode, types.CodeSystemOID]{},
 			},
@@ -277,6 +279,8 @@ func (h *Hl7xml) buildSeries(
 	// Add time sequence using the polymorphic SequenceValue (Typed + XsiType)
 	timeSeq := types.SequenceComponent{
 		Sequence: types.Sequence{
+			ClassCode: "OBS",
+			MoodCode:  "EVN",
 			Value: &types.SequenceValue{
 				XsiType: "GLIST_TS",
 				Typed: &types.GLIST_TS{
@@ -355,6 +359,8 @@ func (h *Hl7xml) buildLeadSequence(
 
 	seq := types.SequenceComponent{
 		Sequence: types.Sequence{
+			ClassCode: "OBS",
+			MoodCode:  "EVN",
 			Value: &types.SequenceValue{
 				XsiType: "SLIST_PQ",
 				Typed: &types.SLIST_PQ{
