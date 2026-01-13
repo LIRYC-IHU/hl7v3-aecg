@@ -387,6 +387,46 @@ func TestContextCancellation(t *testing.T) {
 	}
 }
 
+// TestRootAttributes tests that Type and SchemaLocation attributes appear in XML output
+func TestRootAttributes(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create minimal document
+	h := NewHl7xml(tmpDir)
+	h.Initialize(types.CPT_CODE_ECG_Routine, types.CPT_OID, "", "")
+
+	// Marshal to XML
+	xmlData, err := xml.MarshalIndent(&h.HL7AEcg, "", "  ")
+	if err != nil {
+		t.Fatalf("Failed to marshal XML: %v", err)
+	}
+
+	xmlString := string(xmlData)
+
+	// Verify type="Observation" attribute is present
+	if !strings.Contains(xmlString, `type="Observation"`) {
+		t.Error("XML output missing type=\"Observation\" attribute on AnnotatedECG element")
+	}
+
+	// Verify xsi:schemaLocation attribute is present
+	if !strings.Contains(xmlString, `xsi:schemaLocation="urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"`) {
+		t.Error("XML output missing xsi:schemaLocation attribute on AnnotatedECG element")
+	}
+
+	// Verify both attributes appear in opening AnnotatedECG tag
+	// Using Contains to check both are in the output (order may vary)
+	expectedAttrs := []string{
+		`type="Observation"`,
+		`xsi:schemaLocation="urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"`,
+	}
+
+	for _, attr := range expectedAttrs {
+		if !strings.Contains(xmlString, attr) {
+			t.Errorf("Expected attribute not found in XML: %s", attr)
+		}
+	}
+}
+
 // TestMultipleSeries tests adding multiple ECG series
 func TestMultipleSeries(t *testing.T) {
 	tmpDir := t.TempDir()
