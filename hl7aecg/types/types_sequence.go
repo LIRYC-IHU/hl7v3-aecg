@@ -103,6 +103,15 @@ type SequenceComponent struct {
 // Cardinality: Required (within SequenceComponent)
 // Reference: HL7 aECG Implementation Guide, Page 35-37
 type Sequence struct {
+	// ClassCode specifies the HL7 v3 RIM Act class, always 'OBS' for observations.
+	// Required for schema validation against PORT_MT020001.xsd.
+	ClassCode string `xml:"classCode,attr"`
+
+	// MoodCode specifies the HL7 v3 RIM mood, always 'EVN' for recorded observations.
+	// EVN = Event, indicating an actual observation that occurred.
+	// Required for schema validation against PORT_MT020001.xsd.
+	MoodCode string `xml:"moodCode,attr"`
+
 	// Code names the dimension or type of values in the sequence.
 	//
 	// Time Sequence Codes (from HL7 ActCode, OID 2.16.840.1.113883.5.4):
