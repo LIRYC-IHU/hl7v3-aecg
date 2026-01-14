@@ -24,6 +24,7 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
 )
 
 type ProcedureCode string
@@ -351,6 +352,40 @@ func NewCode[T ~string, U ~string](code T, codeSystem U, codeSystemName string, 
 		CodeSystemName: codeSystemName,
 		DisplayName:    displayName,
 	}
+}
+
+// UnmarshalXML implements xml.Unmarshaler for Code[T, U].
+//
+// This custom unmarshaler ensures proper type conversion from XML string attributes
+// to the generic type parameters T and U. While Go's encoding/xml can handle basic
+// generic types with ~string constraints, this method provides:
+//   - Explicit error wrapping with context (per ADR-4)
+//   - Documentation that this type is intentionally unmarshalable
+//   - Future extensibility for custom validation during unmarshalling
+//
+// The method uses an intermediate raw struct to decode XML attributes as strings,
+// then converts them to the appropriate typed values using Go's type conversion.
+func (c *Code[T, U]) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	// Intermediate struct for decoding XML attributes as strings
+	var raw struct {
+		Code           string `xml:"code,attr"`
+		CodeSystem     string `xml:"codeSystem,attr"`
+		CodeSystemName string `xml:"codeSystemName,attr"`
+		DisplayName    string `xml:"displayName,attr"`
+	}
+
+	// Decode the XML element into the raw struct
+	if err := d.DecodeElement(&raw, &start); err != nil {
+		return fmt.Errorf("unmarshal Code: %w", err)
+	}
+
+	// Convert string values to generic types
+	c.Code = T(raw.Code)
+	c.CodeSystem = U(raw.CodeSystem)
+	c.CodeSystemName = raw.CodeSystemName
+	c.DisplayName = raw.DisplayName
+
+	return nil
 }
 
 // EffectiveTime represents an HL7 interval of time (IVL<TS> datatype).

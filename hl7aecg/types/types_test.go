@@ -531,3 +531,250 @@ func TestTime_XMLMarshal(t *testing.T) {
 		})
 	}
 }
+
+// TestCode_XMLUnmarshal tests XML unmarshaling for Code type with generic parameters
+func TestCode_XMLUnmarshal(t *testing.T) {
+	tests := []struct {
+		name               string
+		xmlData            string
+		wantCode           string
+		wantCodeSystem     string
+		wantCodeSystemName string
+		wantDisplayName    string
+		wantError          bool
+	}{
+		{
+			name:               "Unmarshal Code with all attributes",
+			xmlData:            `<code code="93000" codeSystem="2.16.840.1.113883.6.12" codeSystemName="CPT-4" displayName="Routine ECG"></code>`,
+			wantCode:           "93000",
+			wantCodeSystem:     "2.16.840.1.113883.6.12",
+			wantCodeSystemName: "CPT-4",
+			wantDisplayName:    "Routine ECG",
+			wantError:          false,
+		},
+		{
+			name:               "Unmarshal Code with required attributes only",
+			xmlData:            `<code code="RHYTHM" codeSystem="2.16.840.1.113883.5.4"></code>`,
+			wantCode:           "RHYTHM",
+			wantCodeSystem:     "2.16.840.1.113883.5.4",
+			wantCodeSystemName: "",
+			wantDisplayName:    "",
+			wantError:          false,
+		},
+		{
+			name:               "Unmarshal Code with empty codeSystem (valid for informal vocabularies)",
+			xmlData:            `<code code="B" codeSystem="" displayName="Blinded"></code>`,
+			wantCode:           "B",
+			wantCodeSystem:     "",
+			wantCodeSystemName: "",
+			wantDisplayName:    "Blinded",
+			wantError:          false,
+		},
+		{
+			name:               "Unmarshal Code self-closing tag",
+			xmlData:            `<code code="MDC_ECG_LEAD_I" codeSystem="2.16.840.1.113883.6.24"/>`,
+			wantCode:           "MDC_ECG_LEAD_I",
+			wantCodeSystem:     "2.16.840.1.113883.6.24",
+			wantCodeSystemName: "",
+			wantDisplayName:    "",
+			wantError:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var code Code[string, string]
+			err := xml.Unmarshal([]byte(tt.xmlData), &code)
+
+			if (err != nil) != tt.wantError {
+				t.Errorf("xml.Unmarshal() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+
+			if !tt.wantError {
+				if code.Code != tt.wantCode {
+					t.Errorf("xml.Unmarshal() Code = %v, want %v", code.Code, tt.wantCode)
+				}
+				if code.CodeSystem != tt.wantCodeSystem {
+					t.Errorf("xml.Unmarshal() CodeSystem = %v, want %v", code.CodeSystem, tt.wantCodeSystem)
+				}
+				if code.CodeSystemName != tt.wantCodeSystemName {
+					t.Errorf("xml.Unmarshal() CodeSystemName = %v, want %v", code.CodeSystemName, tt.wantCodeSystemName)
+				}
+				if code.DisplayName != tt.wantDisplayName {
+					t.Errorf("xml.Unmarshal() DisplayName = %v, want %v", code.DisplayName, tt.wantDisplayName)
+				}
+			}
+		})
+	}
+}
+
+// TestCode_XMLUnmarshal_TypedGenerics tests XML unmarshaling with specialized generic types
+func TestCode_XMLUnmarshal_TypedGenerics(t *testing.T) {
+	tests := []struct {
+		name           string
+		xmlData        string
+		wantCode       CPT_CODE
+		wantCodeSystem CodeSystemOID
+		wantError      bool
+	}{
+		{
+			name:           "Unmarshal into Code[CPT_CODE, CodeSystemOID]",
+			xmlData:        `<code code="93000" codeSystem="2.16.840.1.113883.6.12"></code>`,
+			wantCode:       CPT_CODE("93000"),
+			wantCodeSystem: CodeSystemOID("2.16.840.1.113883.6.12"),
+			wantError:      false,
+		},
+		{
+			name:           "Unmarshal CPT code with display name",
+			xmlData:        `<code code="93000" codeSystem="2.16.840.1.113883.6.12" displayName="Routine ECG"></code>`,
+			wantCode:       CPT_CODE_ECG_Routine,
+			wantCodeSystem: CPT_OID,
+			wantError:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var code Code[CPT_CODE, CodeSystemOID]
+			err := xml.Unmarshal([]byte(tt.xmlData), &code)
+
+			if (err != nil) != tt.wantError {
+				t.Errorf("xml.Unmarshal() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+
+			if !tt.wantError {
+				if code.Code != tt.wantCode {
+					t.Errorf("xml.Unmarshal() Code = %v, want %v", code.Code, tt.wantCode)
+				}
+				if code.CodeSystem != tt.wantCodeSystem {
+					t.Errorf("xml.Unmarshal() CodeSystem = %v, want %v", code.CodeSystem, tt.wantCodeSystem)
+				}
+			}
+		})
+	}
+}
+
+// TestCode_XMLUnmarshal_InHL7AEcgContext tests Code unmarshaling within HL7AEcg document
+func TestCode_XMLUnmarshal_InHL7AEcgContext(t *testing.T) {
+	xmlData := `<?xml version="1.0" encoding="UTF-8"?>
+<AnnotatedECG xmlns="urn:hl7-org:v3">
+	<id root="728989ec-b8bc-49cd-9a5a-30be5ade1db5"/>
+	<code code="93000" codeSystem="2.16.840.1.113883.6.12" displayName="Routine ECG"/>
+	<text>Test ECG</text>
+	<confidentialityCode code="B" codeSystem="" displayName="Blinded"/>
+	<reasonCode code="PER_PROTOCOL" codeSystem=""/>
+</AnnotatedECG>`
+
+	var ecg HL7AEcg
+	err := xml.Unmarshal([]byte(xmlData), &ecg)
+	if err != nil {
+		t.Fatalf("xml.Unmarshal() error = %v", err)
+	}
+
+	// Verify main Code field (Code[CPT_CODE, CodeSystemOID])
+	if ecg.Code == nil {
+		t.Fatal("HL7AEcg.Code is nil, expected non-nil")
+	}
+	if ecg.Code.Code != CPT_CODE("93000") {
+		t.Errorf("Code.Code = %v, want %v", ecg.Code.Code, CPT_CODE("93000"))
+	}
+	if ecg.Code.CodeSystem != CodeSystemOID("2.16.840.1.113883.6.12") {
+		t.Errorf("Code.CodeSystem = %v, want %v", ecg.Code.CodeSystem, CodeSystemOID("2.16.840.1.113883.6.12"))
+	}
+	if ecg.Code.DisplayName != "Routine ECG" {
+		t.Errorf("Code.DisplayName = %v, want %v", ecg.Code.DisplayName, "Routine ECG")
+	}
+
+	// Verify ConfidentialityCode (Code[ConfidentialityCode, string])
+	if ecg.ConfidentialityCode == nil {
+		t.Fatal("HL7AEcg.ConfidentialityCode is nil, expected non-nil")
+	}
+	if ecg.ConfidentialityCode.Code != ConfidentialityCode("B") {
+		t.Errorf("ConfidentialityCode.Code = %v, want %v", ecg.ConfidentialityCode.Code, ConfidentialityCode("B"))
+	}
+	if ecg.ConfidentialityCode.DisplayName != "Blinded" {
+		t.Errorf("ConfidentialityCode.DisplayName = %v, want %v", ecg.ConfidentialityCode.DisplayName, "Blinded")
+	}
+
+	// Verify ReasonCode (Code[ReasonCode, string])
+	if ecg.ReasonCode == nil {
+		t.Fatal("HL7AEcg.ReasonCode is nil, expected non-nil")
+	}
+	if ecg.ReasonCode.Code != ReasonCode("PER_PROTOCOL") {
+		t.Errorf("ReasonCode.Code = %v, want %v", ecg.ReasonCode.Code, ReasonCode("PER_PROTOCOL"))
+	}
+
+	// Verify other fields
+	if ecg.Text != "Test ECG" {
+		t.Errorf("Text = %v, want %v", ecg.Text, "Test ECG")
+	}
+	if ecg.ID == nil || ecg.ID.Root != "728989ec-b8bc-49cd-9a5a-30be5ade1db5" {
+		t.Errorf("ID.Root = %v, want %v", ecg.ID.Root, "728989ec-b8bc-49cd-9a5a-30be5ade1db5")
+	}
+}
+
+// TestCode_XMLRoundTrip tests marshal → unmarshal produces equivalent struct
+func TestCode_XMLRoundTrip(t *testing.T) {
+	tests := []struct {
+		name string
+		code Code[string, string]
+	}{
+		{
+			name: "Round-trip with all attributes",
+			code: Code[string, string]{
+				Code:           "93000",
+				CodeSystem:     "2.16.840.1.113883.6.12",
+				CodeSystemName: "CPT-4",
+				DisplayName:    "Routine ECG",
+			},
+		},
+		{
+			name: "Round-trip with required attributes only",
+			code: Code[string, string]{
+				Code:       "RHYTHM",
+				CodeSystem: "2.16.840.1.113883.5.4",
+			},
+		},
+		{
+			name: "Round-trip with empty codeSystem",
+			code: Code[string, string]{
+				Code:        "B",
+				CodeSystem:  "",
+				DisplayName: "Blinded",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Marshal to XML
+			data, err := xml.Marshal(&tt.code)
+			if err != nil {
+				t.Fatalf("xml.Marshal() error = %v", err)
+			}
+
+			// Unmarshal back to struct
+			var unmarshalled Code[string, string]
+			err = xml.Unmarshal(data, &unmarshalled)
+			if err != nil {
+				t.Fatalf("xml.Unmarshal() error = %v", err)
+			}
+
+			// Compare
+			if unmarshalled.Code != tt.code.Code {
+				t.Errorf("Round-trip Code = %v, want %v", unmarshalled.Code, tt.code.Code)
+			}
+			if unmarshalled.CodeSystem != tt.code.CodeSystem {
+				t.Errorf("Round-trip CodeSystem = %v, want %v", unmarshalled.CodeSystem, tt.code.CodeSystem)
+			}
+			if unmarshalled.CodeSystemName != tt.code.CodeSystemName {
+				t.Errorf("Round-trip CodeSystemName = %v, want %v", unmarshalled.CodeSystemName, tt.code.CodeSystemName)
+			}
+			if unmarshalled.DisplayName != tt.code.DisplayName {
+				t.Errorf("Round-trip DisplayName = %v, want %v", unmarshalled.DisplayName, tt.code.DisplayName)
+			}
+		})
+	}
+}
