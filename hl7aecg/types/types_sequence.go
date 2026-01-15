@@ -653,39 +653,74 @@ func (s *SLIST_INT) GetActualValues() ([]int, error) {
 
 // UnmarshalXML handles decoding of <value xsi:type="...">...</value>
 func (sv *SequenceValue) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	// Extract xsi:type attribute from start element.
+	// Go's encoding/xml doesn't handle namespaced attributes with prefix notation,
+	// so we must manually extract attributes where Local="type" and the namespace
+	// is "http://www.w3.org/2001/XMLSchema-instance" or the prefix is "xsi".
+	for _, attr := range start.Attr {
+		if attr.Name.Local == "type" &&
+			(attr.Name.Space == "http://www.w3.org/2001/XMLSchema-instance" ||
+				attr.Name.Space == "xsi") {
+			sv.XsiType = attr.Value
+			break
+		}
+	}
+
 	type Alias SequenceValue
 	aux := &Alias{}
 
 	if err := d.DecodeElement(aux, &start); err != nil {
 		return err
 	}
+	// Preserve XsiType we extracted manually
+	xsiType := sv.XsiType
 	*sv = SequenceValue(*aux)
+	sv.XsiType = xsiType
+
+	// RawXML contains just child elements without a root, so we need to wrap it
+	// in a temporary root element for xml.Unmarshal to work correctly.
+	wrappedXML := append([]byte("<root>"), sv.RawXML...)
+	wrappedXML = append(wrappedXML, []byte("</root>")...)
 
 	switch sv.XsiType {
 	case "GLIST_TS":
-		var v GLIST_TS
-		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
+		var wrapper struct {
+			Head      HeadTimestamp `xml:"head"`
+			Increment Increment     `xml:"increment"`
+		}
+		if err := xml.Unmarshal(wrappedXML, &wrapper); err != nil {
 			return err
 		}
-		sv.Typed = &v
+		sv.Typed = &GLIST_TS{Head: wrapper.Head, Increment: wrapper.Increment}
 	case "GLIST_PQ":
-		var v GLIST_PQ
-		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
+		var wrapper struct {
+			Head      PhysicalQuantity `xml:"head"`
+			Increment PhysicalQuantity `xml:"increment"`
+		}
+		if err := xml.Unmarshal(wrappedXML, &wrapper); err != nil {
 			return err
 		}
-		sv.Typed = &v
+		sv.Typed = &GLIST_PQ{Head: wrapper.Head, Increment: wrapper.Increment}
 	case "SLIST_PQ":
-		var v SLIST_PQ
-		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
+		var wrapper struct {
+			Origin PhysicalQuantity `xml:"origin"`
+			Scale  PhysicalQuantity `xml:"scale"`
+			Digits string           `xml:"digits"`
+		}
+		if err := xml.Unmarshal(wrappedXML, &wrapper); err != nil {
 			return err
 		}
-		sv.Typed = &v
+		sv.Typed = &SLIST_PQ{Origin: wrapper.Origin, Scale: wrapper.Scale, Digits: wrapper.Digits}
 	case "SLIST_INT":
-		var v SLIST_INT
-		if err := xml.Unmarshal(sv.RawXML, &v); err != nil {
+		var wrapper struct {
+			Origin int    `xml:"origin"`
+			Scale  int    `xml:"scale"`
+			Digits string `xml:"digits"`
+		}
+		if err := xml.Unmarshal(wrappedXML, &wrapper); err != nil {
 			return err
 		}
-		sv.Typed = &v
+		sv.Typed = &SLIST_INT{Origin: wrapper.Origin, Scale: wrapper.Scale, Digits: wrapper.Digits}
 	default:
 		// Unknown type — keep raw XML
 		sv.Typed = nil

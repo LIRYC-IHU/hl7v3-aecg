@@ -387,9 +387,7 @@ func TestGLIST_TS_XMLMarshal(t *testing.T) {
 }
 
 // TestSequenceValue_UnmarshalXML tests polymorphic unmarshaling of SequenceValue
-// TODO: This test is currently skipped because UnmarshalXML for SequenceValue is not yet implemented
 func TestSequenceValue_UnmarshalXML(t *testing.T) {
-	t.Skip("UnmarshalXML for SequenceValue not yet implemented")
 	tests := []struct {
 		name        string
 		xmlData     string
