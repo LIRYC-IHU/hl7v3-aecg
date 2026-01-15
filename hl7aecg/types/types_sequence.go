@@ -504,6 +504,21 @@ type PhysicalQuantity struct {
 	Unit string `xml:"unit,attr,omitempty"`
 }
 
+// GetValueFloat parses the Value string as a float64.
+//
+// Returns the parsed value and true if successful.
+// Returns 0 and false if the value is empty or parsing fails.
+func (pq *PhysicalQuantity) GetValueFloat() (float64, bool) {
+	if pq == nil || pq.Value == "" {
+		return 0, false
+	}
+	val, err := strconv.ParseFloat(pq.Value, 64)
+	if err != nil {
+		return 0, false
+	}
+	return val, true
+}
+
 // GetDigits parses the Digits string into a slice of integers.
 //
 // Returns a slice of integer values parsed from the space-separated string.
