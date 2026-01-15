@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"fmt"
 )
 
 func (c *Code[T, U]) ValidateCode(ctx context.Context, vctx *ValidationContext, key string) error {
@@ -14,7 +15,12 @@ func (c *Code[T, U]) ValidateCode(ctx context.Context, vctx *ValidationContext, 
 		return validateTrialSubjectCode(vctx, any(c).(*Code[CodeRole, CodeSystemOID]))
 	case *Code[GenderCode, CodeSystemOID]:
 		return validateGenderCode(vctx, any(c).(*Code[GenderCode, CodeSystemOID]))
+	case *Code[RaceCode, CodeSystemOID]:
+		return validateRaceCode(vctx, any(c).(*Code[RaceCode, CodeSystemOID]))
+	case *Code[SeriesTypeCode, CodeSystemOID]:
+		return validateSeriesTypeCode(vctx, any(c).(*Code[SeriesTypeCode, CodeSystemOID]))
 	default:
+		fmt.Printf("No specific validation implemented for code type %T\n", c)
 		return nil
 	}
 }
@@ -44,6 +50,20 @@ func validateTrialSubjectCode(vctx *ValidationContext, code *Code[CodeRole, Code
 func validateGenderCode(vctx *ValidationContext, code *Code[GenderCode, CodeSystemOID]) error {
 	if code.Code != GENDER_FEMALE && code.Code != GENDER_MALE && code.Code != GENDER_UNDIFFERENTIATED {
 		vctx.AddError(ErrRaceCode)
+	}
+	return nil
+}
+
+func validateRaceCode(vctx *ValidationContext, code *Code[RaceCode, CodeSystemOID]) error {
+	if !IsRaceCode(string(code.Code)) {
+		vctx.AddError(ErrRaceCode)
+	}
+	return nil
+}
+
+func validateSeriesTypeCode(vctx *ValidationContext, code *Code[SeriesTypeCode, CodeSystemOID]) error {
+	if !IsSeriesTypeCode(code.Code) {
+		vctx.AddError(ErrSeriesTypeCode)
 	}
 	return nil
 }
