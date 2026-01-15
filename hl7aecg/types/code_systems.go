@@ -89,6 +89,9 @@ type WaveformAnnotationCode string
 type MeasurementCode string
 type IntervalCode string
 
+// AnnotationCode is a generic type for all annotation codes (MDC or vendor-specific)
+type AnnotationCode string
+
 const (
 	// Waveform Components
 	MDC_ECG_WAVC_PWAVE   WaveformAnnotationCode = "MDC_ECG_WAVC_PWAVE"   // P wave
@@ -96,20 +99,26 @@ const (
 	MDC_ECG_WAVC_TWAVE   WaveformAnnotationCode = "MDC_ECG_WAVC_TWAVE"   // T wave
 	MDC_ECG_WAVC_UWAVE   WaveformAnnotationCode = "MDC_ECG_WAVC_UWAVE"   // U wave
 
-	// Time Intervals
+	// Time Intervals (MDC codes used in annotationSet)
 	MDC_ECG_TIME_PD_QT  IntervalCode = "MDC_ECG_TIME_PD_QT"  // QT interval (ms)
 	MDC_ECG_TIME_PD_QTC IntervalCode = "MDC_ECG_TIME_PD_QTC" // QT interval corrected (ms)
+	MDC_ECG_TIME_PD_QTc IntervalCode = "MDC_ECG_TIME_PD_QTc" // QTc interval (ms) - lowercase variant
 	MDC_ECG_TIME_PD_RR  IntervalCode = "MDC_ECG_TIME_PD_RR"  // RR interval (ms)
 	MDC_ECG_TIME_PD_PP  IntervalCode = "MDC_ECG_TIME_PD_PP"  // PP interval (ms)
 	MDC_ECG_TIME_PD_PR  IntervalCode = "MDC_ECG_TIME_PD_PR"  // PR interval (ms)
 	MDC_ECG_TIME_PD_QRS IntervalCode = "MDC_ECG_TIME_PD_QRS" // QRS duration (ms)
 
-	// Measurements
+	// Measurements (MDC codes used in annotationSet)
 	MDC_ECG_HEART_RATE MeasurementCode = "MDC_ECG_HEART_RATE" // Heart rate (bpm)
 	MDC_ECG_AMPL_QRS   MeasurementCode = "MDC_ECG_AMPL_QRS"   // QRS amplitude (µV)
 	MDC_ECG_AMPL_P     MeasurementCode = "MDC_ECG_AMPL_P"     // P wave amplitude (µV)
 	MDC_ECG_AMPL_T     MeasurementCode = "MDC_ECG_AMPL_T"     // T wave amplitude (µV)
 	MDC_ECG_AMPL_ST    MeasurementCode = "MDC_ECG_AMPL_ST"    // ST segment amplitude (µV)
+
+	// Axis Measurements
+	MDC_ECG_ANGLE_P_FRONT   AnnotationCode = "MDC_ECG_ANGLE_P_FRONT"   // P axis (degrees)
+	MDC_ECG_ANGLE_QRS_FRONT AnnotationCode = "MDC_ECG_ANGLE_QRS_FRONT" // QRS axis (degrees)
+	MDC_ECG_ANGLE_T_FRONT   AnnotationCode = "MDC_ECG_ANGLE_T_FRONT"   // T axis (degrees)
 )
 
 // =============================================================================
@@ -278,6 +287,13 @@ func IsValidGender(code string) bool {
 	return code == string(GENDER_MALE) ||
 		code == string(GENDER_FEMALE) ||
 		code == string(GENDER_UNDIFFERENTIATED)
+}
+
+// IsRaceCode checks if code is a valid HL7 race code.
+func IsRaceCode(code string) bool {
+	return code == string(RACE_NATIVE_AMERICAN) || code == string(RACE_ASIAN) ||
+		code == string(RACE_BLACK_OR_AFRICAN_AMERICAN) || code == string(RACE_HAWAIIAN_OR_PACIFIC_ISLAND) ||
+		code == string(RACE_WHITE) || code == string(RACE_OTHER)
 }
 
 // GetStandardLeads returns all standard 12-lead codes.
