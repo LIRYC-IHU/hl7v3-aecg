@@ -104,6 +104,9 @@ var (
 
 	// ErrInvalidHeartRate indicates heart rate is out of reasonable range
 	ErrInvalidHeartRate = NewValidationError("HeartRate", "Heart rate out of reasonable range (30-250 bpm)")
+
+	// ErrSeriesTypeCode indicates series type code is invalid
+	ErrSeriesTypeCode = NewValidationError("SeriesCode", "SeriesCode must be one of\n\t- 'RHYTHM'\n\t- 'REPRESENTATIVE_BEAT'")
 )
 
 // =============================================================================
