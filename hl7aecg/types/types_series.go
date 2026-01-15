@@ -146,6 +146,12 @@ type Series struct {
 	// Cardinality: Optional (0..*)
 	// Reference: HL7 aECG Implementation Guide
 	Derivation []Derivation `xml:"derivation,omitempty"`
+
+	// SubjectOf Optionally captures annotations or observations about the series.
+	//
+	// Example: Comments about signal quality, artifacts, or other observations
+	//	XML Tag: <subjectOf>...</subjectOf>
+	SubjectOf []SubjectOf `xml:"subjectOf,omitempty"`
 }
 
 func NewSeries() *Series {
@@ -589,4 +595,33 @@ type Derivation struct {
 	// XML Tag: <derivedSeries>...</derivedSeries>
 	// Cardinality: Required (within Derivation)
 	DerivedSeries Series `xml:"derivedSeries"`
+}
+
+// SubjectOf represents annotations or observations about the series.
+//
+// Contains an AnnotationSet with ECG measurements such as heart rate,
+// PR interval, QRS duration, QT interval, and lead-specific annotations.
+//
+// XML Structure:
+//
+//	<subjectOf>
+//	  <annotationSet>
+//	    <activityTime value="20250923103600"/>
+//	    <component>
+//	      <annotation>
+//	        <code code="MDC_ECG_HEART_RATE" codeSystem="2.16.840.1.113883.6.24"/>
+//	        <value xsi:type="PQ" value="57" unit="bpm"/>
+//	      </annotation>
+//	    </component>
+//	  </annotationSet>
+//	</subjectOf>
+//
+// Cardinality: Optional (0..* within Series)
+// Reference: HL7 aECG Implementation Guide
+type SubjectOf struct {
+	// AnnotationSet contains ECG annotations for the series.
+	//
+	// XML Tag: <annotationSet>...</annotationSet>
+	// Cardinality: Optional
+	AnnotationSet *AnnotationSet `xml:"annotationSet,omitempty"`
 }
