@@ -20,8 +20,8 @@ func (s *Series) Validate(ctx context.Context, vctx *ValidationContext) error {
 	}
 
 	// Code is required
-	if IsPointer(s.Code) && s.Code != nil {
-		s.Code.ValidateCode(ctx, vctx, "SeriesCode")
+	if s.Code == nil {
+		vctx.AddError(ErrMissingCode)
 	} else {
 		s.Code.ValidateCode(ctx, vctx, "SeriesCode")
 	}
