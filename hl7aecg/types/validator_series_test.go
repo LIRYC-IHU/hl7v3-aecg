@@ -188,7 +188,7 @@ func TestSeriesAuthor_Validate(t *testing.T) {
 		{
 			name: "Invalid author ID",
 			seriesAuthor: SeriesAuthor{
-				ID: &ID{Root: ""},
+				ID:                       &ID{Root: ""},
 				ManufacturedSeriesDevice: ManufacturedSeriesDevice{},
 			},
 			wantError: ErrMissingID,
@@ -248,9 +248,9 @@ func TestManufacturedSeriesDevice_Validate(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name   string
-		device ManufacturedSeriesDevice
-		wantError    *ValidationError
+		name      string
+		device    ManufacturedSeriesDevice
+		wantError *ValidationError
 	}{
 		{
 			name:      "Valid device - minimal",
