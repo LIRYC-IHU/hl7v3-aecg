@@ -27,8 +27,6 @@ import (
 	"fmt"
 )
 
-type ProcedureCode string
-
 // HL7AEcg represents the root element of an HL7 aECG XML document.
 //
 // This structure contains the top-level metadata for an annotated ECG, including
