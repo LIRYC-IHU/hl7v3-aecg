@@ -452,7 +452,7 @@ func TestAnnotationSet_Marshal_LeadSpecific(t *testing.T) {
 	}
 
 	// Add lead-specific annotation for Lead I
-	leadIAnn := annSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "")
+	leadIAnn := annSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "test", "")
 	leadIAnn.AddNestedAnnotationWithCodeSystemName("P_ONSET", "", 234, "ms")
 	leadIAnn.AddNestedAnnotationWithCodeSystemName("R_AMP", "", 535, "uV")
 

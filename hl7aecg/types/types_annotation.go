@@ -404,7 +404,7 @@ func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName st
 //	leadAnn := annotationSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MMEASUREMENT_MATRIX", "")
 //	leadAnn.AddNestedAnnotation("P_ONSET", "", 234, "ms")
 //	leadAnn.AddNestedAnnotation("R_AMP", "", 535, "uV")
-func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystemName string) *Annotation {
+func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, codeSystemName string) *Annotation {
 	if as == nil {
 		return nil
 	}
@@ -412,7 +412,7 @@ func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystemName 
 	ann := Annotation{
 		Code: &Code[string, string]{
 			Code:           matrixCode,
-			CodeSystem:     "", // Empty for vendor-specific codes
+			CodeSystem:     codeSystem, // Empty for vendor-specific codes
 			CodeSystemName: codeSystemName,
 		},
 		Support: &AnnotationSupport{
