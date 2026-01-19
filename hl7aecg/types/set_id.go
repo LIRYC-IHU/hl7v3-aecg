@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -55,7 +54,6 @@ func (i *ID) SetID(id, extension string, defaultExtension ...string) {
 
 func (h *HL7AEcg) SetRootID(id, extension string) *InstanceID {
 	once.Do(func() {
-		fmt.Println("Setting singleton InstanceID")
 		instanceID = &InstanceID{ID: id, Extension: extension}
 	})
 	return instanceID
