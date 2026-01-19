@@ -625,3 +625,68 @@ type SubjectOf struct {
 	// Cardinality: Optional
 	AnnotationSet *AnnotationSet `xml:"annotationSet,omitempty"`
 }
+
+// =============================================================================
+// Series Builder Methods for Annotations
+// =============================================================================
+
+// InitAnnotationSet creates and initializes a new AnnotationSet for the series.
+//
+// If the series already has SubjectOf elements, this method initializes the
+// AnnotationSet on the first SubjectOf element. Otherwise, it creates a new
+// SubjectOf element.
+//
+// Parameters:
+//   - activityTime: The time when annotations were made (format: YYYYMMDDHHmmss)
+//
+// Returns:
+//   - *AnnotationSet: Pointer to the newly created AnnotationSet for adding annotations
+//
+// Example:
+//
+//	series := &Series{...}
+//	annSet := series.InitAnnotationSet("20250923103600")
+//	annSet.AddHeartRate(57)
+//	annSet.AddPRInterval(192)
+func (s *Series) InitAnnotationSet(activityTime string) *AnnotationSet {
+	if s == nil {
+		return nil
+	}
+
+	// Create SubjectOf if it doesn't exist
+	if len(s.SubjectOf) == 0 {
+		s.SubjectOf = []SubjectOf{{}}
+	}
+
+	// Initialize AnnotationSet with activity time
+	s.SubjectOf[0].AnnotationSet = &AnnotationSet{
+		ActivityTime: &Time{Value: activityTime},
+		Component:    []AnnotationComponent{},
+	}
+
+	return s.SubjectOf[0].AnnotationSet
+}
+
+// GetOrCreateAnnotationSet returns the existing AnnotationSet or creates a new one.
+//
+// If the series already has an AnnotationSet, this method returns it.
+// Otherwise, it creates a new one with the given activityTime.
+//
+// Parameters:
+//   - activityTime: The time to use if creating a new AnnotationSet
+//
+// Returns:
+//   - *AnnotationSet: Pointer to the AnnotationSet
+func (s *Series) GetOrCreateAnnotationSet(activityTime string) *AnnotationSet {
+	if s == nil {
+		return nil
+	}
+
+	// Return existing if present
+	if len(s.SubjectOf) > 0 && s.SubjectOf[0].AnnotationSet != nil {
+		return s.SubjectOf[0].AnnotationSet
+	}
+
+	// Otherwise create new
+	return s.InitAnnotationSet(activityTime)
+}
