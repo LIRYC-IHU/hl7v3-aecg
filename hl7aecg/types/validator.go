@@ -119,6 +119,8 @@ func (e *EffectiveTime) Validate(ctx context.Context, vctx *ValidationContext) e
 		vctx.AddError(ErrInvalidTimeFormat)
 	} else if e.High.Value != "" && !isValidTimestamp(e.High.Value) {
 		vctx.AddError(ErrInvalidTimeFormat)
+	} else if e.Low.Value == "" && e.High.Value == "" {
+		vctx.AddError(ErrMissingTimeValue)
 	}
 	return nil
 }

@@ -63,6 +63,9 @@ var (
 	// ErrInvalidTimeFormat indicates time format is invalid
 	ErrInvalidTimeFormat = NewValidationError("Time", "Time format must be unix timestamp")
 
+	// ErrMissingTimeValue indicates time value is missing
+	ErrMissingTimeValue = NewValidationError("Time", "At least one time value (Low, High) must be provided")
+
 	// ErrInvalidOID indicates OID format is invalid
 	ErrInvalidOID = NewValidationError("OID", "OID must be in dot-separated format (e.g., 2.16.840.1.113883.3.1)")
 
