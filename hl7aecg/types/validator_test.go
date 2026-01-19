@@ -51,10 +51,10 @@ func TestValidationContext_AddWarning(t *testing.T) {
 // TestValidationContext_GetError tests retrieving errors from validation context
 func TestValidationContext_GetError(t *testing.T) {
 	tests := []struct {
-		name           string
-		errors         []error
-		wantNil        bool
-		wantMultiple   bool
+		name         string
+		errors       []error
+		wantNil      bool
+		wantMultiple bool
 	}{
 		{
 			name:    "No errors",
@@ -224,7 +224,7 @@ func TestEffectiveTime_Validate(t *testing.T) {
 				Low:  Time{Value: ""},
 				High: Time{Value: ""},
 			},
-			wantError: ErrInvalidEffectiveTime,
+			wantError: ErrMissingTimeValue,
 		},
 		{
 			name: "Invalid low format",
@@ -274,6 +274,9 @@ func TestEffectiveTime_Validate(t *testing.T) {
 
 			if tt.wantError != nil {
 				if !vctx.HasErrors() {
+					t.Error("Errors:", vctx.Errors)
+					t.Error("Expected error:", tt.wantError)
+					t.Error("name:", tt.name)
 					t.Error("Expected validation error, got none")
 					return
 				}
