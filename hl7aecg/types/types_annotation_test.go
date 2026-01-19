@@ -420,7 +420,9 @@ func TestAnnotationSet_Marshal_NestedAnnotation(t *testing.T) {
 	}
 
 	// Add QTc with nested correction formula
-	qtcAnn := annSet.AddQTcInterval(0)
+	qtcIdx := annSet.AddQTcInterval(0)
+	qtcAnn := annSet.GetAnnotation(qtcIdx)
+	require.NotNil(t, qtcAnn)
 	qtcAnn.AddNestedAnnotationWithCodeSystemName("ECG_TIME_PD_QTcH", "", 413, "ms")
 
 	// Marshal to XML
@@ -433,11 +435,11 @@ func TestAnnotationSet_Marshal_NestedAnnotation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify parent annotation
-	qtcAnn = unmarshaledSet.GetAnnotationByCode("MDC_ECG_TIME_PD_QTc")
-	require.NotNil(t, qtcAnn)
+	qtcAnnResult := unmarshaledSet.GetAnnotationByCode("MDC_ECG_TIME_PD_QTc")
+	require.NotNil(t, qtcAnnResult)
 
 	// Verify nested annotation
-	nestedAnn := qtcAnn.GetNestedAnnotationByCode("ECG_TIME_PD_QTcH")
+	nestedAnn := qtcAnnResult.GetNestedAnnotationByCode("ECG_TIME_PD_QTcH")
 	require.NotNil(t, nestedAnn)
 	val, ok := nestedAnn.GetValueFloat()
 	assert.True(t, ok)
@@ -452,9 +454,11 @@ func TestAnnotationSet_Marshal_LeadSpecific(t *testing.T) {
 	}
 
 	// Add lead-specific annotation for Lead I
-	leadIAnn := annSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "test", "")
-	leadIAnn.AddNestedAnnotationWithCodeSystemName("P_ONSET", "", 234, "ms")
-	leadIAnn.AddNestedAnnotationWithCodeSystemName("R_AMP", "", 535, "uV")
+	leadIdx := annSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "test", "")
+	leadAnn := annSet.GetAnnotation(leadIdx)
+	require.NotNil(t, leadAnn)
+	leadAnn.AddNestedAnnotationWithCodeSystemName("P_ONSET", "", 234, "ms")
+	leadAnn.AddNestedAnnotationWithCodeSystemName("R_AMP", "", 535, "uV")
 
 	// Marshal to XML
 	xmlData, err := xml.MarshalIndent(annSet, "", "  ")
@@ -466,20 +470,20 @@ func TestAnnotationSet_Marshal_LeadSpecific(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify lead annotation
-	leadAnn := unmarshaledSet.GetLeadAnnotations("MDC_ECG_LEAD_I")
-	require.NotNil(t, leadAnn)
+	unmarshaledLeadAnn := unmarshaledSet.GetLeadAnnotations("MDC_ECG_LEAD_I")
+	require.NotNil(t, unmarshaledLeadAnn)
 
 	// Verify supportingROI structure
-	require.NotNil(t, leadAnn.Support)
-	assert.Equal(t, "ROIBND", leadAnn.Support.SupportingROI.ClassCode)
+	require.NotNil(t, unmarshaledLeadAnn.Support)
+	assert.Equal(t, "ROIBND", unmarshaledLeadAnn.Support.SupportingROI.ClassCode)
 
 	// Verify nested measurements
-	pOnset := leadAnn.GetNestedAnnotationByCode("P_ONSET")
+	pOnset := unmarshaledLeadAnn.GetNestedAnnotationByCode("P_ONSET")
 	require.NotNil(t, pOnset)
 	val, _ := pOnset.GetValueFloat()
 	assert.Equal(t, float64(234), val)
 
-	rAmp := leadAnn.GetNestedAnnotationByCode("R_AMP")
+	rAmp := unmarshaledLeadAnn.GetNestedAnnotationByCode("R_AMP")
 	require.NotNil(t, rAmp)
 	val, _ = rAmp.GetValueFloat()
 	assert.Equal(t, float64(535), val)

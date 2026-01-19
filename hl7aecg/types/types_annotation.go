@@ -326,14 +326,15 @@ func (a *Annotation) GetNestedAnnotationByCode(code string) *Annotation {
 //   - unit: The unit of measurement (e.g., "bpm", "ms", "uV")
 //
 // Returns:
-//   - *Annotation: Pointer to the newly created annotation for further customization
+//   - int: Index of the newly created annotation (use GetAnnotation to retrieve safely)
 //
 // Example:
 //
-//	ann := annotationSet.AddAnnotation("MDC_ECG_HEART_RATE", "2.16.840.1.113883.6.24", 57, "bpm")
-func (as *AnnotationSet) AddAnnotation(code, codeSystem string, value float64, unit string) *Annotation {
+//	idx := annotationSet.AddAnnotation("MDC_ECG_HEART_RATE", "2.16.840.1.113883.6.24", 57, "bpm")
+//	ann := annotationSet.GetAnnotation(idx)
+func (as *AnnotationSet) AddAnnotation(code, codeSystem string, value float64, unit string) int {
 	if as == nil {
-		return nil
+		return -1
 	}
 
 	ann := Annotation{
@@ -349,24 +350,24 @@ func (as *AnnotationSet) AddAnnotation(code, codeSystem string, value float64, u
 	}
 
 	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
-	return &as.Component[len(as.Component)-1].Annotation
+	return len(as.Component) - 1
 }
 
 // AddAnnotationWithCodeSystemName adds a global annotation with codeSystemName instead of codeSystem.
 //
-// Used for vendor-specific codes (e.g., ) that don't have an OID.
+// Used for vendor-specific codes (e.g., MINDRAY, GE, Philips) that don't have an OID.
 //
 // Parameters:
 //   - code: The annotation code
-//   - codeSystemName: The code system name (e.g., "")
+//   - codeSystemName: The code system name (e.g., "MINDRAY")
 //   - value: The numeric value
 //   - unit: The unit of measurement
 //
 // Returns:
-//   - *Annotation: Pointer to the newly created annotation
-func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) *Annotation {
+//   - int: Index of the newly created annotation (use GetAnnotation to retrieve safely)
+func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) int {
 	if as == nil {
-		return nil
+		return -1
 	}
 
 	ann := Annotation{
@@ -383,7 +384,7 @@ func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName st
 	}
 
 	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
-	return &as.Component[len(as.Component)-1].Annotation
+	return len(as.Component) - 1
 }
 
 // AddLeadAnnotation adds a lead-specific annotation with supportingROI.
@@ -393,20 +394,21 @@ func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName st
 //
 // Parameters:
 //   - leadCode: The lead code (e.g., "MDC_ECG_LEAD_I", "MDC_ECG_LEAD_V1")
-//   - matrixCode: The measurement matrix code (typically "MMEASUREMENT_MATRIX")
-//   - codeSystemName: The code system name (e.g., "")
+//   - matrixCode: The measurement matrix code (typically "MEASUREMENT_MATRIX")
+//   - codeSystem: The code system OID (empty for vendor codes)
+//   - codeSystemName: The code system name (e.g., "MINDRAY")
 //
 // Returns:
-//   - *Annotation: Pointer to the lead annotation for adding nested measurements
+//   - int: Index of the lead annotation (use GetAnnotation to retrieve safely)
 //
 // Example:
 //
-//	leadAnn := annotationSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MMEASUREMENT_MATRIX", "")
-//	leadAnn.AddNestedAnnotation("P_ONSET", "", 234, "ms")
-//	leadAnn.AddNestedAnnotation("R_AMP", "", 535, "uV")
-func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, codeSystemName string) *Annotation {
+//	idx := annotationSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "", "MINDRAY")
+//	ann := annotationSet.GetAnnotation(idx)
+//	ann.AddNestedAnnotation("P_ONSET", "", 234, "ms")
+func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, codeSystemName string) int {
 	if as == nil {
-		return nil
+		return -1
 	}
 
 	ann := Annotation{
@@ -435,7 +437,7 @@ func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, cod
 	}
 
 	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
-	return &as.Component[len(as.Component)-1].Annotation
+	return len(as.Component) - 1
 }
 
 // AddNestedAnnotation adds a nested annotation to an existing annotation.
@@ -451,15 +453,16 @@ func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, cod
 //   - unit: The unit of measurement
 //
 // Returns:
-//   - *Annotation: Pointer to the nested annotation for further nesting if needed
+//   - int: Index of the nested annotation (use GetNestedAnnotation to retrieve safely)
 //
 // Example:
 //
-//	qtcAnn := annotationSet.AddAnnotation("MDC_ECG_TIME_PD_QTc", MDC_OID, 0, "")
-//	qtcAnn.AddNestedAnnotation("ECG_TIME_PD_QTcH", "", 413, "ms")
-func (a *Annotation) AddNestedAnnotation(code, codeSystem string, value float64, unit string) *Annotation {
+//	idx := annotationSet.AddAnnotation("MDC_ECG_TIME_PD_QTc", MDC_OID, 0, "")
+//	ann := annotationSet.GetAnnotation(idx)
+//	nestedIdx := ann.AddNestedAnnotation("ECG_TIME_PD_QTcH", "", 413, "ms")
+func (a *Annotation) AddNestedAnnotation(code, codeSystem string, value float64, unit string) int {
 	if a == nil {
-		return nil
+		return -1
 	}
 
 	nested := Annotation{
@@ -475,13 +478,22 @@ func (a *Annotation) AddNestedAnnotation(code, codeSystem string, value float64,
 	}
 
 	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
-	return &a.Component[len(a.Component)-1].Annotation
+	return len(a.Component) - 1
 }
 
 // AddNestedAnnotationWithCodeSystemName adds a nested annotation with codeSystemName.
-func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) *Annotation {
+//
+// Parameters:
+//   - code: The nested annotation code
+//   - codeSystemName: The code system name (e.g., "MINDRAY")
+//   - value: The numeric value
+//   - unit: The unit of measurement
+//
+// Returns:
+//   - int: Index of the nested annotation (use GetNestedAnnotation to retrieve safely)
+func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) int {
 	if a == nil {
-		return nil
+		return -1
 	}
 
 	nested := Annotation{
@@ -498,7 +510,29 @@ func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName 
 	}
 
 	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
-	return &a.Component[len(a.Component)-1].Annotation
+	return len(a.Component) - 1
+}
+
+// =============================================================================
+// Safe Accessor Methods
+// =============================================================================
+
+// GetAnnotation safely retrieves an annotation by index.
+// Returns nil if index is out of bounds.
+func (as *AnnotationSet) GetAnnotation(index int) *Annotation {
+	if as == nil || index < 0 || index >= len(as.Component) {
+		return nil
+	}
+	return &as.Component[index].Annotation
+}
+
+// GetNestedAnnotation safely retrieves a nested annotation by index.
+// Returns nil if index is out of bounds.
+func (a *Annotation) GetNestedAnnotation(index int) *Annotation {
+	if a == nil || index < 0 || index >= len(a.Component) {
+		return nil
+	}
+	return &a.Component[index].Annotation
 }
 
 // =============================================================================
@@ -506,28 +540,32 @@ func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName 
 // =============================================================================
 
 // AddHeartRate adds a heart rate annotation in beats per minute.
-func (as *AnnotationSet) AddHeartRate(value float64) *Annotation {
+// Returns the index of the added annotation.
+func (as *AnnotationSet) AddHeartRate(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_HEART_RATE), string(MDC_OID), value, "bpm")
 }
 
 // AddPRInterval adds a PR interval annotation in milliseconds.
-func (as *AnnotationSet) AddPRInterval(value float64) *Annotation {
+// Returns the index of the added annotation.
+func (as *AnnotationSet) AddPRInterval(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_TIME_PD_PR), string(MDC_OID), value, "ms")
 }
 
 // AddQRSDuration adds a QRS duration annotation in milliseconds.
-func (as *AnnotationSet) AddQRSDuration(value float64) *Annotation {
+// Returns the index of the added annotation.
+func (as *AnnotationSet) AddQRSDuration(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QRS), string(MDC_OID), value, "ms")
 }
 
 // AddQTInterval adds a QT interval annotation in milliseconds.
-func (as *AnnotationSet) AddQTInterval(value float64) *Annotation {
+// Returns the index of the added annotation.
+func (as *AnnotationSet) AddQTInterval(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QT), string(MDC_OID), value, "ms")
 }
 
 // AddQTcInterval adds a QTc interval annotation in milliseconds.
-// Returns the annotation so nested correction formulas can be added.
-func (as *AnnotationSet) AddQTcInterval(value float64) *Annotation {
+// Returns the index of the added annotation so nested correction formulas can be added.
+func (as *AnnotationSet) AddQTcInterval(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QTc), string(MDC_OID), value, "ms")
 }
 
