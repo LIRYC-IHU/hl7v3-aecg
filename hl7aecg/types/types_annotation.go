@@ -1,5 +1,7 @@
 package types
 
+import "strconv"
+
 // =============================================================================
 // Annotation Types
 // =============================================================================
@@ -75,7 +77,7 @@ type AnnotationComponent struct {
 // XML Structure (lead-specific with support):
 //
 //	<annotation>
-//	  <code code="MINDRAY_MEASUREMENT_MATRIX" codeSystem="" codeSystemName="MINDRAY"/>
+//	  <code code="MEASUREMENT_MATRIX" codeSystem="" codeSystemName=""/>
 //	  <support>
 //	    <supportingROI classCode="ROIBND">
 //	      <code code="ROIPS" codeSystem="2.16.840.1.113883.5.4"/>
@@ -309,4 +311,233 @@ func (a *Annotation) GetNestedAnnotationByCode(code string) *Annotation {
 		}
 	}
 	return nil
+}
+
+// =============================================================================
+// Builder Methods for Creating Annotations
+// =============================================================================
+
+// AddAnnotation adds a global annotation (without supportingROI) to the annotation set.
+//
+// Parameters:
+//   - code: The annotation code (e.g., "MDC_ECG_HEART_RATE")
+//   - codeSystem: The code system OID (e.g., "2.16.840.1.113883.6.24" for MDC)
+//   - value: The numeric value as a float64
+//   - unit: The unit of measurement (e.g., "bpm", "ms", "uV")
+//
+// Returns:
+//   - *Annotation: Pointer to the newly created annotation for further customization
+//
+// Example:
+//
+//	ann := annotationSet.AddAnnotation("MDC_ECG_HEART_RATE", "2.16.840.1.113883.6.24", 57, "bpm")
+func (as *AnnotationSet) AddAnnotation(code, codeSystem string, value float64, unit string) *Annotation {
+	if as == nil {
+		return nil
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:       code,
+			CodeSystem: codeSystem,
+		},
+		Value: &PhysicalQuantity{
+			XsiType: "PQ",
+			Value:   formatFloat(value),
+			Unit:    unit,
+		},
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return &as.Component[len(as.Component)-1].Annotation
+}
+
+// AddAnnotationWithCodeSystemName adds a global annotation with codeSystemName instead of codeSystem.
+//
+// Used for vendor-specific codes (e.g., ) that don't have an OID.
+//
+// Parameters:
+//   - code: The annotation code
+//   - codeSystemName: The code system name (e.g., "")
+//   - value: The numeric value
+//   - unit: The unit of measurement
+//
+// Returns:
+//   - *Annotation: Pointer to the newly created annotation
+func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) *Annotation {
+	if as == nil {
+		return nil
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:           code,
+			CodeSystem:     "", // Empty for vendor-specific codes
+			CodeSystemName: codeSystemName,
+		},
+		Value: &PhysicalQuantity{
+			XsiType: "PQ",
+			Value:   formatFloat(value),
+			Unit:    unit,
+		},
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return &as.Component[len(as.Component)-1].Annotation
+}
+
+// AddLeadAnnotation adds a lead-specific annotation with supportingROI.
+//
+// Creates an annotation that applies to a specific ECG lead. The annotation includes
+// a supportingROI structure that identifies which lead the measurements apply to.
+//
+// Parameters:
+//   - leadCode: The lead code (e.g., "MDC_ECG_LEAD_I", "MDC_ECG_LEAD_V1")
+//   - matrixCode: The measurement matrix code (typically "MMEASUREMENT_MATRIX")
+//   - codeSystemName: The code system name (e.g., "")
+//
+// Returns:
+//   - *Annotation: Pointer to the lead annotation for adding nested measurements
+//
+// Example:
+//
+//	leadAnn := annotationSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MMEASUREMENT_MATRIX", "")
+//	leadAnn.AddNestedAnnotation("P_ONSET", "", 234, "ms")
+//	leadAnn.AddNestedAnnotation("R_AMP", "", 535, "uV")
+func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystemName string) *Annotation {
+	if as == nil {
+		return nil
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:           matrixCode,
+			CodeSystem:     "", // Empty for vendor-specific codes
+			CodeSystemName: codeSystemName,
+		},
+		Support: &AnnotationSupport{
+			SupportingROI: AnnotationSupportingROI{
+				ClassCode: "ROIBND",
+				Code: &Code[string, string]{
+					Code:       string(ROIPS),
+					CodeSystem: string(HL7_ActCode_OID),
+				},
+				Component: []AnnotationBoundaryComponent{{
+					Boundary: AnnotationBoundary{
+						Code: Code[string, string]{
+							Code:       leadCode,
+							CodeSystem: string(MDC_OID),
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return &as.Component[len(as.Component)-1].Annotation
+}
+
+// AddNestedAnnotation adds a nested annotation to an existing annotation.
+//
+// Used for complex annotations that have sub-measurements, such as:
+// - QTc with different correction formulas
+// - Lead-specific measurements within a MEASUREMENT_MATRIX
+//
+// Parameters:
+//   - code: The nested annotation code
+//   - codeSystem: The code system OID (can be empty for vendor codes)
+//   - value: The numeric value
+//   - unit: The unit of measurement
+//
+// Returns:
+//   - *Annotation: Pointer to the nested annotation for further nesting if needed
+//
+// Example:
+//
+//	qtcAnn := annotationSet.AddAnnotation("MDC_ECG_TIME_PD_QTc", MDC_OID, 0, "")
+//	qtcAnn.AddNestedAnnotation("ECG_TIME_PD_QTcH", "", 413, "ms")
+func (a *Annotation) AddNestedAnnotation(code, codeSystem string, value float64, unit string) *Annotation {
+	if a == nil {
+		return nil
+	}
+
+	nested := Annotation{
+		Code: &Code[string, string]{
+			Code:       code,
+			CodeSystem: codeSystem,
+		},
+		Value: &PhysicalQuantity{
+			XsiType: "PQ",
+			Value:   formatFloat(value),
+			Unit:    unit,
+		},
+	}
+
+	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
+	return &a.Component[len(a.Component)-1].Annotation
+}
+
+// AddNestedAnnotationWithCodeSystemName adds a nested annotation with codeSystemName.
+func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName string, value float64, unit string) *Annotation {
+	if a == nil {
+		return nil
+	}
+
+	nested := Annotation{
+		Code: &Code[string, string]{
+			Code:           code,
+			CodeSystem:     "",
+			CodeSystemName: codeSystemName,
+		},
+		Value: &PhysicalQuantity{
+			XsiType: "PQ",
+			Value:   formatFloat(value),
+			Unit:    unit,
+		},
+	}
+
+	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
+	return &a.Component[len(a.Component)-1].Annotation
+}
+
+// =============================================================================
+// Convenience Methods for Common Annotations
+// =============================================================================
+
+// AddHeartRate adds a heart rate annotation in beats per minute.
+func (as *AnnotationSet) AddHeartRate(value float64) *Annotation {
+	return as.AddAnnotation(string(MDC_ECG_HEART_RATE), string(MDC_OID), value, "bpm")
+}
+
+// AddPRInterval adds a PR interval annotation in milliseconds.
+func (as *AnnotationSet) AddPRInterval(value float64) *Annotation {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_PR), string(MDC_OID), value, "ms")
+}
+
+// AddQRSDuration adds a QRS duration annotation in milliseconds.
+func (as *AnnotationSet) AddQRSDuration(value float64) *Annotation {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QRS), string(MDC_OID), value, "ms")
+}
+
+// AddQTInterval adds a QT interval annotation in milliseconds.
+func (as *AnnotationSet) AddQTInterval(value float64) *Annotation {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QT), string(MDC_OID), value, "ms")
+}
+
+// AddQTcInterval adds a QTc interval annotation in milliseconds.
+// Returns the annotation so nested correction formulas can be added.
+func (as *AnnotationSet) AddQTcInterval(value float64) *Annotation {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QTc), string(MDC_OID), value, "ms")
+}
+
+// formatFloat converts a float64 to a string for PhysicalQuantity.Value.
+// Removes trailing zeros and decimal point if not needed.
+func formatFloat(f float64) string {
+	// Check if it's an integer value
+	if f == float64(int64(f)) {
+		return strconv.FormatInt(int64(f), 10)
+	}
+	// Use standard formatting for floats
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }
