@@ -41,7 +41,7 @@ func (h *Hl7xml) Initialize(code types.CPT_CODE, codeSystem types.CodeSystemOID,
 
 	// Set required HL7 v3 RIM attributes for schema validation
 	h.HL7AEcg.Type = "Observation"
-	h.HL7AEcg.SchemaLocation = "urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"
+	h.HL7AEcg.SchemaLocation = "urn:hl7-org:v3"
 
 	return h
 }
