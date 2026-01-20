@@ -18,6 +18,20 @@ func (h *Hl7xml) SetEffectiveTime(low, high string, low_inclusive, high_inclusiv
 	return h
 }
 
+// SetSchemaLocation sets the SchemaLocation attribute of the HL7AEcg instance.
+// Init by default sets SchemaLocation to "urn:hl7-org:v3".
+func (h *Hl7xml) SetSchemaLocation(location string) *Hl7xml {
+	h.HL7AEcg.SchemaLocation = location
+	return h
+}
+
+// SetType sets the Type attribute of the HL7AEcg instance.
+// Init by default sets Type to "Observation".
+func (h *Hl7xml) SetType(typeValue string) *Hl7xml {
+	h.HL7AEcg.Type = typeValue
+	return h
+}
+
 // SetLocation configures the trial site location for the clinical trial.
 //
 // This method uses the ComponentOf structure to access ClinicalTrial.
