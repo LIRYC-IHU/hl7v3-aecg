@@ -69,18 +69,31 @@ func (a *Annotation) Validate(ctx context.Context, vctx *ValidationContext) erro
 
 	// Validate value if present
 	if a.Value != nil {
-		if a.Value.Value == "" {
-			vctx.AddError(NewValidationError(
-				"annotation.value",
-				"Annotation value cannot be empty",
-			))
-		}
-		// Validate that value can be parsed as float
-		if _, ok := a.Value.GetValueFloat(); !ok && a.Value.Value != "" {
-			vctx.AddError(NewValidationError(
-				"annotation.value",
-				"Annotation value must be a valid number",
-			))
+		// Validate based on value type (PQ or ST)
+		if a.Value.IsPQ() {
+			// Physical Quantity validation
+			pq, _ := a.Value.Typed.(*PhysicalQuantity)
+			if pq != nil {
+				if pq.Value == "" {
+					vctx.AddError(NewValidationError(
+						"annotation.value",
+						"Annotation value cannot be empty",
+					))
+				} else if _, ok := a.Value.GetValueFloat(); !ok {
+					vctx.AddError(NewValidationError(
+						"annotation.value",
+						"Annotation PQ value must be a valid number",
+					))
+				}
+			}
+		} else if a.Value.IsST() {
+			// String value validation
+			if text, ok := a.Value.GetText(); !ok || text == "" {
+				vctx.AddError(NewValidationError(
+					"annotation.value",
+					"Annotation ST value cannot be empty",
+				))
+			}
 		}
 	}
 
