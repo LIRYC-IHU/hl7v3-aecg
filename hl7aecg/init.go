@@ -3,7 +3,6 @@ package hl7aecg
 import (
 	"context"
 	stdxml "encoding/xml"
-	"fmt"
 	"os"
 
 	"github.com/ECUST-XX/xml"
@@ -36,7 +35,6 @@ func NewHl7xml(outputDir string) *Hl7xml {
 
 // Initialize sets up the HL7 aECG document with the provided CPT code and code system OID.
 func (h *Hl7xml) Initialize(code types.CPT_CODE, codeSystem types.CodeSystemOID, codeSystemName, displayName string) *Hl7xml {
-	fmt.Println("Initialize HL7 aECG document")
 	h.HL7AEcg.Code.SetCode(code, codeSystem, codeSystemName, displayName)
 
 	// Set required HL7 v3 RIM attributes for schema validation

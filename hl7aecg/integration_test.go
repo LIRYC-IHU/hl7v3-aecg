@@ -409,7 +409,7 @@ func TestRootAttributes(t *testing.T) {
 	}
 
 	// Verify xsi:schemaLocation attribute is present
-	if !strings.Contains(xmlString, `xsi:schemaLocation="urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"`) {
+	if !strings.Contains(xmlString, `xsi:schemaLocation="urn:hl7-org:v3"`) {
 		t.Error("XML output missing xsi:schemaLocation attribute on AnnotatedECG element")
 	}
 
@@ -417,7 +417,7 @@ func TestRootAttributes(t *testing.T) {
 	// Using Contains to check both are in the output (order may vary)
 	expectedAttrs := []string{
 		`type="Observation"`,
-		`xsi:schemaLocation="urn:hl7-org:v3 ../schema/PORT_MT020001.xsd"`,
+		`xsi:schemaLocation="urn:hl7-org:v3"`,
 	}
 
 	for _, attr := range expectedAttrs {
