@@ -713,10 +713,7 @@ hl7v3-aecg/
 │   └── converters.go    # Type converters
 │
 ├── main.go              # Complete example
-├── README.md            # This file
-├── CLAUDE.md            # AI assistant instructions
-├── WIKI.md              # Implementation status
-└── TODO.md              # Development roadmap
+└── README.md            # This file
 ```
 
 ## Standards Compliance
@@ -734,7 +731,6 @@ This library implements:
 The generated XML conforms to the HL7 aECG schema:
 
 - Namespace: `urn:hl7-org:v3`
-- Schema location: `PORT_MT020001.xsd`
 
 ## Contributing
 
@@ -782,8 +778,6 @@ Contributions are welcome! Please follow these guidelines:
 - XML parsing (unmarshalling from XML files)
 - Enhanced validation (cross-field consistency)
 
-See [TODO.md](TODO.md) for detailed roadmap.
-
 ## License
 
 [MIT License](LICENSE)
@@ -804,8 +798,7 @@ For questions, issues, or contributions:
 
 - Open an issue on GitHub
 - Refer to the [WIKI.md](WIKI.md) for implementation details
-- Check [CLAUDE.md](CLAUDE.md) for code structure guidance
 
 ---
 
-**Note**: This library is designed for research and clinical trial use. Ensure compliance with relevant regulations (FDA, EMA, etc.) for your specific use case.
+**Note**: This library is designed for research and clinical trial use. Ensure compliance with relevant regulations (FDA) for your specific use case.
