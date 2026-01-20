@@ -1,6 +1,9 @@
 package types
 
-import "strconv"
+import (
+	"encoding/xml"
+	"strconv"
+)
 
 // =============================================================================
 // Annotation Types
@@ -109,11 +112,15 @@ type Annotation struct {
 	// Cardinality: Optional
 	Code *Code[string, string] `xml:"code,omitempty"`
 
-	// Value contains the measurement value as a Physical Quantity.
+	// Value contains the measurement value (either Physical Quantity or String).
 	//
-	// XML Tag: <value xsi:type="PQ" value="..." unit="..."/>
+	// The value type depends on the annotation type:
+	//   - Numeric measurements: xsi:type="PQ" (PhysicalQuantity)
+	//   - Text statements: xsi:type="ST" (StringValue)
+	//
+	// XML Tag: <value xsi:type="...">...</value>
 	// Cardinality: Optional
-	Value *PhysicalQuantity `xml:"value,omitempty"`
+	Value *AnnotationValue `xml:"value,omitempty"`
 
 	// Support defines the region of interest for lead-specific annotations.
 	//
@@ -242,6 +249,184 @@ type AnnotationBoundary struct {
 	Code Code[string, string] `xml:"code"`
 }
 
+// StringValue represents a string text value for annotations.
+//
+// Used for interpretation statements and other textual annotations.
+//
+// XML Structure:
+//
+//	<value xsi:type="ST">Rythme sinusal avec ESA</value>
+//
+// Cardinality: Optional (within Annotation)
+// XML Attribute: xsi:type="ST"
+type StringValue struct {
+	// XsiType specifies the type as "ST" for String.
+	//
+	// XML Tag: xsi:type="ST"
+	// Cardinality: Required
+	XsiType string `xml:"xsi:type,attr"`
+
+	// Value is the text content.
+	//
+	// XML Tag: (text content)
+	// Cardinality: Required
+	Value string `xml:",chardata"`
+}
+
+// AnnotationValue represents a polymorphic value that can be either a PhysicalQuantity or StringValue.
+//
+// This type handles the xsi:type discrimination for annotation values.
+//
+// Supported types:
+//   - xsi:type="PQ": PhysicalQuantity (numeric with unit)
+//   - xsi:type="ST": StringValue (text content)
+//
+// XML Structure (PQ):
+//
+//	<value xsi:type="PQ" value="57" unit="bpm"/>
+//
+// XML Structure (ST):
+//
+//	<value xsi:type="ST">Rythme sinusal avec ESA</value>
+type AnnotationValue struct {
+	XMLName xml.Name `xml:"value"`
+	XsiType string   `xml:"xsi:type,attr,omitempty"`
+
+	RawXML []byte `xml:",innerxml"`
+	// Typed holds the decoded value as one of:
+	//   - *PhysicalQuantity (xsi:type="PQ")
+	//   - *StringValue (xsi:type="ST")
+	Typed any `xml:"-"`
+}
+
+// UnmarshalXML decodes the annotation value based on xsi:type.
+func (av *AnnotationValue) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	// Extract xsi:type attribute
+	for _, attr := range start.Attr {
+		// Check for xsi:type attribute (namespace can be empty or xsi)
+		if attr.Name.Local == "type" || (attr.Name.Space == "xsi" && attr.Name.Local == "type") {
+			av.XsiType = attr.Value
+			break
+		}
+	}
+
+	// Decode based on type
+	switch av.XsiType {
+	case "PQ":
+		// For PhysicalQuantity, attributes are on the element itself
+		pq := &PhysicalQuantity{
+			XsiType: "PQ",
+		}
+		for _, attr := range start.Attr {
+			switch attr.Name.Local {
+			case "value":
+				pq.Value = attr.Value
+			case "unit":
+				pq.Unit = attr.Value
+			}
+		}
+		av.Typed = pq
+		// Consume the end element
+		return d.Skip()
+
+	case "ST":
+		// For String, content is character data
+		var text string
+		if err := d.DecodeElement(&text, &start); err != nil {
+			return err
+		}
+		st := &StringValue{
+			XsiType: "ST",
+			Value:   text,
+		}
+		av.Typed = st
+		return nil
+
+	default:
+		// Unknown type - skip the element
+		return d.Skip()
+	}
+}
+
+// MarshalXML encodes the annotation value based on its typed content.
+func (av *AnnotationValue) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	start.Name = xml.Name{Local: "value"}
+
+	// Add xsi:type attribute
+	if av.XsiType != "" {
+		start.Attr = append(start.Attr, xml.Attr{
+			Name:  xml.Name{Local: "xsi:type"},
+			Value: av.XsiType,
+		})
+	}
+
+	// Encode based on typed value
+	switch typed := av.Typed.(type) {
+	case *PhysicalQuantity:
+		// For PQ, we need to encode as attributes
+		if typed.Value != "" {
+			start.Attr = append(start.Attr, xml.Attr{
+				Name:  xml.Name{Local: "value"},
+				Value: typed.Value,
+			})
+		}
+		if typed.Unit != "" {
+			start.Attr = append(start.Attr, xml.Attr{
+				Name:  xml.Name{Local: "unit"},
+				Value: typed.Unit,
+			})
+		}
+		return e.EncodeElement("", start)
+
+	case *StringValue:
+		// For ST, encode as character data
+		return e.EncodeElement(typed.Value, start)
+
+	default:
+		// If no typed value, encode empty element
+		return e.EncodeElement("", start)
+	}
+}
+
+// GetValueFloat returns the numeric value if this is a PhysicalQuantity.
+// Returns (value, true) if successful, (0, false) otherwise.
+func (av *AnnotationValue) GetValueFloat() (float64, bool) {
+	if pq, ok := av.Typed.(*PhysicalQuantity); ok {
+		return pq.GetValueFloat()
+	}
+	return 0, false
+}
+
+// GetValueUnit returns the unit if this is a PhysicalQuantity.
+// Returns empty string if this is not a PQ or if unit is not set.
+func (av *AnnotationValue) GetValueUnit() string {
+	if pq, ok := av.Typed.(*PhysicalQuantity); ok {
+		return pq.Unit
+	}
+	return ""
+}
+
+// GetText returns the text content if this is a StringValue.
+// Returns (text, true) if successful, ("", false) otherwise.
+func (av *AnnotationValue) GetText() (string, bool) {
+	if st, ok := av.Typed.(*StringValue); ok {
+		return st.Value, true
+	}
+	return "", false
+}
+
+// IsPQ returns true if this annotation value is a PhysicalQuantity.
+func (av *AnnotationValue) IsPQ() bool {
+	_, ok := av.Typed.(*PhysicalQuantity)
+	return ok
+}
+
+// IsST returns true if this annotation value is a StringValue.
+func (av *AnnotationValue) IsST() bool {
+	_, ok := av.Typed.(*StringValue)
+	return ok
+}
+
 // =============================================================================
 // Helper Functions for Annotations
 // =============================================================================
@@ -290,12 +475,12 @@ func (a *Annotation) GetValueFloat() (float64, bool) {
 }
 
 // GetValueUnit returns the unit of the annotation value.
-// Returns empty string if the annotation has no value.
+// Returns empty string if the annotation has no value or is not a PQ.
 func (a *Annotation) GetValueUnit() string {
 	if a == nil || a.Value == nil {
 		return ""
 	}
-	return a.Value.Unit
+	return a.Value.GetValueUnit()
 }
 
 // GetNestedAnnotationByCode finds a nested annotation with the given code.
@@ -337,15 +522,32 @@ func (as *AnnotationSet) AddAnnotation(code, codeSystem string, value float64, u
 		return -1
 	}
 
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystem == "" {
+		return -1
+	}
+	if unit == "" {
+		return -1
+	}
+	if isInvalidFloat(value) {
+		return -1
+	}
+
 	ann := Annotation{
 		Code: &Code[string, string]{
 			Code:       code,
 			CodeSystem: codeSystem,
 		},
-		Value: &PhysicalQuantity{
+		Value: &AnnotationValue{
 			XsiType: "PQ",
-			Value:   formatFloat(value),
-			Unit:    unit,
+			Typed: &PhysicalQuantity{
+				XsiType: "PQ",
+				Value:   formatFloat(value),
+				Unit:    unit,
+			},
 		},
 	}
 
@@ -370,16 +572,33 @@ func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName st
 		return -1
 	}
 
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystemName == "" {
+		return -1
+	}
+	if unit == "" {
+		return -1
+	}
+	if isInvalidFloat(value) {
+		return -1
+	}
+
 	ann := Annotation{
 		Code: &Code[string, string]{
 			Code:           code,
 			CodeSystem:     "", // Empty for vendor-specific codes
 			CodeSystemName: codeSystemName,
 		},
-		Value: &PhysicalQuantity{
+		Value: &AnnotationValue{
 			XsiType: "PQ",
-			Value:   formatFloat(value),
-			Unit:    unit,
+			Typed: &PhysicalQuantity{
+				XsiType: "PQ",
+				Value:   formatFloat(value),
+				Unit:    unit,
+			},
 		},
 	}
 
@@ -408,6 +627,18 @@ func (as *AnnotationSet) AddAnnotationWithCodeSystemName(code, codeSystemName st
 //	ann.AddNestedAnnotation("P_ONSET", "", 234, "ms")
 func (as *AnnotationSet) AddLeadAnnotation(leadCode, matrixCode, codeSystem, codeSystemName string) int {
 	if as == nil {
+		return -1
+	}
+
+	// Input validation
+	if leadCode == "" {
+		return -1
+	}
+	if matrixCode == "" {
+		return -1
+	}
+	// Note: codeSystem can be empty for vendor codes, but codeSystemName should be provided in that case
+	if codeSystem == "" && codeSystemName == "" {
 		return -1
 	}
 
@@ -465,15 +696,30 @@ func (a *Annotation) AddNestedAnnotation(code, codeSystem string, value float64,
 		return -1
 	}
 
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	// Note: codeSystem can be empty for vendor codes
+	if unit == "" {
+		return -1
+	}
+	if isInvalidFloat(value) {
+		return -1
+	}
+
 	nested := Annotation{
 		Code: &Code[string, string]{
 			Code:       code,
 			CodeSystem: codeSystem,
 		},
-		Value: &PhysicalQuantity{
+		Value: &AnnotationValue{
 			XsiType: "PQ",
-			Value:   formatFloat(value),
-			Unit:    unit,
+			Typed: &PhysicalQuantity{
+				XsiType: "PQ",
+				Value:   formatFloat(value),
+				Unit:    unit,
+			},
 		},
 	}
 
@@ -496,17 +742,229 @@ func (a *Annotation) AddNestedAnnotationWithCodeSystemName(code, codeSystemName 
 		return -1
 	}
 
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystemName == "" {
+		return -1
+	}
+	if unit == "" {
+		return -1
+	}
+	if isInvalidFloat(value) {
+		return -1
+	}
+
 	nested := Annotation{
 		Code: &Code[string, string]{
 			Code:           code,
 			CodeSystem:     "",
 			CodeSystemName: codeSystemName,
 		},
-		Value: &PhysicalQuantity{
+		Value: &AnnotationValue{
 			XsiType: "PQ",
-			Value:   formatFloat(value),
-			Unit:    unit,
+			Typed: &PhysicalQuantity{
+				XsiType: "PQ",
+				Value:   formatFloat(value),
+				Unit:    unit,
+			},
 		},
+	}
+
+	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
+	return len(a.Component) - 1
+}
+
+// =============================================================================
+// Text Annotation Builder Methods
+// =============================================================================
+
+// AddTextAnnotation adds a global text annotation (interpretation statement, etc).
+//
+// Used for textual annotations like ECG interpretation statements.
+//
+// Parameters:
+//   - code: The annotation code (e.g., "MDC_ECG_INTERPRETATION")
+//   - codeSystem: The code system OID (e.g., "2.16.840.1.113883.6.24" for MDC)
+//   - text: The text content
+//
+// Returns:
+//   - int: Index of the newly created annotation (use GetAnnotation to retrieve safely)
+//
+// Example:
+//
+//	idx := annotationSet.AddTextAnnotation("MDC_ECG_INTERPRETATION", "2.16.840.1.113883.6.24", "Rythme sinusal")
+//	ann := annotationSet.GetAnnotation(idx)
+func (as *AnnotationSet) AddTextAnnotation(code, codeSystem, text string) int {
+	if as == nil {
+		return -1
+	}
+
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystem == "" {
+		return -1
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:       code,
+			CodeSystem: codeSystem,
+		},
+	}
+
+	// Only add Value if text is not empty (allows container annotations)
+	if text != "" {
+		ann.Value = &AnnotationValue{
+			XsiType: "ST",
+			Typed: &StringValue{
+				XsiType: "ST",
+				Value:   text,
+			},
+		}
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return len(as.Component) - 1
+}
+
+// AddTextAnnotationWithCodeSystemName adds a text annotation with codeSystemName.
+//
+// Used for vendor-specific textual annotations.
+//
+// Parameters:
+//   - code: The annotation code
+//   - codeSystemName: The code system name (e.g., "MINDRAY")
+//   - text: The text content
+//
+// Returns:
+//   - int: Index of the newly created annotation (use GetAnnotation to retrieve safely)
+func (as *AnnotationSet) AddTextAnnotationWithCodeSystemName(code, codeSystemName, text string) int {
+	if as == nil {
+		return -1
+	}
+
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystemName == "" {
+		return -1
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:           code,
+			CodeSystem:     "", // Empty for vendor-specific codes
+			CodeSystemName: codeSystemName,
+		},
+	}
+
+	// Only add Value if text is not empty (allows container annotations)
+	if text != "" {
+		ann.Value = &AnnotationValue{
+			XsiType: "ST",
+			Typed: &StringValue{
+				XsiType: "ST",
+				Value:   text,
+			},
+		}
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return len(as.Component) - 1
+}
+
+// AddNestedTextAnnotation adds a nested text annotation to an existing annotation.
+//
+// Parameters:
+//   - code: The nested annotation code
+//   - codeSystem: The code system OID (can be empty for vendor codes)
+//   - text: The text content
+//
+// Returns:
+//   - int: Index of the nested annotation (use GetNestedAnnotation to retrieve safely)
+//
+// Example:
+//
+//	interpretIdx := annotationSet.AddTextAnnotation("MDC_ECG_INTERPRETATION", MDC_OID, "")
+//	interp := annotationSet.GetAnnotation(interpretIdx)
+//	interp.AddNestedTextAnnotation("MDC_ECG_INTERPRETATION_STATEMENT", MDC_OID, "Rythme sinusal avec ESA")
+func (a *Annotation) AddNestedTextAnnotation(code, codeSystem, text string) int {
+	if a == nil {
+		return -1
+	}
+
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	// Note: codeSystem can be empty for vendor codes
+
+	nested := Annotation{
+		Code: &Code[string, string]{
+			Code:       code,
+			CodeSystem: codeSystem,
+		},
+	}
+
+	// Only add Value if text is not empty (allows container annotations)
+	if text != "" {
+		nested.Value = &AnnotationValue{
+			XsiType: "ST",
+			Typed: &StringValue{
+				XsiType: "ST",
+				Value:   text,
+			},
+		}
+	}
+
+	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
+	return len(a.Component) - 1
+}
+
+// AddNestedTextAnnotationWithCodeSystemName adds a nested text annotation with codeSystemName.
+//
+// Parameters:
+//   - code: The nested annotation code
+//   - codeSystemName: The code system name (e.g., "MINDRAY")
+//   - text: The text content
+//
+// Returns:
+//   - int: Index of the nested annotation (use GetNestedAnnotation to retrieve safely)
+func (a *Annotation) AddNestedTextAnnotationWithCodeSystemName(code, codeSystemName, text string) int {
+	if a == nil {
+		return -1
+	}
+
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystemName == "" {
+		return -1
+	}
+
+	nested := Annotation{
+		Code: &Code[string, string]{
+			Code:           code,
+			CodeSystem:     "",
+			CodeSystemName: codeSystemName,
+		},
+	}
+
+	// Only add Value if text is not empty (allows container annotations)
+	if text != "" {
+		nested.Value = &AnnotationValue{
+			XsiType: "ST",
+			Typed: &StringValue{
+				XsiType: "ST",
+				Value:   text,
+			},
+		}
 	}
 
 	a.Component = append(a.Component, AnnotationComponent{Annotation: nested})
