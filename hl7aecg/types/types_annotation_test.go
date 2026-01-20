@@ -40,8 +40,11 @@ func TestAnnotationSet_Unmarshal(t *testing.T) {
 
 	// Verify value
 	require.NotNil(t, ann.Value)
-	assert.Equal(t, "57", ann.Value.Value)
-	assert.Equal(t, "bpm", ann.Value.Unit)
+	assert.True(t, ann.Value.IsPQ(), "Value should be PhysicalQuantity")
+	if pq, ok := ann.Value.Typed.(*PhysicalQuantity); ok {
+		assert.Equal(t, "57", pq.Value)
+		assert.Equal(t, "bpm", pq.Unit)
+	}
 
 	// Test GetValueFloat
 	val, ok := ann.GetValueFloat()
@@ -423,7 +426,7 @@ func TestAnnotationSet_Marshal_NestedAnnotation(t *testing.T) {
 	qtcIdx := annSet.AddQTcInterval(0)
 	qtcAnn := annSet.GetAnnotation(qtcIdx)
 	require.NotNil(t, qtcAnn)
-	qtcAnn.AddNestedAnnotationWithCodeSystemName("ECG_TIME_PD_QTcH", "", 413, "ms")
+	qtcAnn.AddNestedAnnotation("ECG_TIME_PD_QTcH", "", 413, "ms")
 
 	// Marshal to XML
 	xmlData, err := xml.MarshalIndent(annSet, "", "  ")
@@ -457,8 +460,8 @@ func TestAnnotationSet_Marshal_LeadSpecific(t *testing.T) {
 	leadIdx := annSet.AddLeadAnnotation("MDC_ECG_LEAD_I", "MEASUREMENT_MATRIX", "test", "")
 	leadAnn := annSet.GetAnnotation(leadIdx)
 	require.NotNil(t, leadAnn)
-	leadAnn.AddNestedAnnotationWithCodeSystemName("P_ONSET", "", 234, "ms")
-	leadAnn.AddNestedAnnotationWithCodeSystemName("R_AMP", "", 535, "uV")
+	leadAnn.AddNestedAnnotation("P_ONSET", "", 234, "ms")
+	leadAnn.AddNestedAnnotation("R_AMP", "", 535, "uV")
 
 	// Marshal to XML
 	xmlData, err := xml.MarshalIndent(annSet, "", "  ")
@@ -496,8 +499,8 @@ func TestAnnotationSet_Marshal_VendorSpecific(t *testing.T) {
 	}
 
 	// Add vendor-specific annotations
-	annSet.AddAnnotationWithCodeSystemName("ECG_P_AXIS", "", 60, "deg")
-	annSet.AddAnnotationWithCodeSystemName("ECG_QRS_AXIS", "", 64, "deg")
+	annSet.AddAnnotationWithCodeSystemName("ECG_P_AXIS", "VENDOR", 60, "deg")
+	annSet.AddAnnotationWithCodeSystemName("ECG_QRS_AXIS", "VENDOR", 64, "deg")
 
 	// Marshal to XML
 	xmlData, err := xml.MarshalIndent(annSet, "", "  ")
@@ -511,7 +514,7 @@ func TestAnnotationSet_Marshal_VendorSpecific(t *testing.T) {
 	// Verify vendor-specific annotations
 	pAxis := unmarshaledSet.GetAnnotationByCode("ECG_P_AXIS")
 	require.NotNil(t, pAxis)
-	assert.Equal(t, "", pAxis.Code.CodeSystemName)
+	assert.Equal(t, "VENDOR", pAxis.Code.CodeSystemName)
 	assert.Equal(t, "", pAxis.Code.CodeSystem) // Empty for vendor codes
 	val, _ := pAxis.GetValueFloat()
 	assert.Equal(t, float64(60), val)
