@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Helper function to create a PhysicalQuantity AnnotationValue for tests
+func makePQValue(value, unit string) *AnnotationValue {
+	return &AnnotationValue{
+		XsiType: "PQ",
+		Typed: &PhysicalQuantity{
+			XsiType: "PQ",
+			Value:   value,
+			Unit:    unit,
+		},
+	}
+}
+
 // TestAnnotationSet_Validate tests AnnotationSet validation
 func TestAnnotationSet_Validate(t *testing.T) {
 	ctx := context.Background()
@@ -21,10 +33,7 @@ func TestAnnotationSet_Validate(t *testing.T) {
 							Code:       "MDC_ECG_HEART_RATE",
 							CodeSystem: "2.16.840.1.113883.6.24",
 						},
-						Value: &PhysicalQuantity{
-							Value: "57",
-							Unit:  "bpm",
-						},
+						Value: makePQValue("57", "bpm"),
 					},
 				},
 			},
@@ -61,10 +70,7 @@ func TestAnnotationSet_Validate(t *testing.T) {
 							Code:       "",
 							CodeSystem: "2.16.840.1.113883.6.24",
 						},
-						Value: &PhysicalQuantity{
-							Value: "57",
-							Unit:  "bpm",
-						},
+						Value: makePQValue("57", "bpm"),
 					},
 				},
 			},
@@ -85,10 +91,7 @@ func TestAnnotationSet_Validate(t *testing.T) {
 							Code:       "MDC_ECG_HEART_RATE",
 							CodeSystem: "2.16.840.1.113883.6.24",
 						},
-						Value: &PhysicalQuantity{
-							Value: "",
-							Unit:  "bpm",
-						},
+						Value: makePQValue("", "bpm"),
 					},
 				},
 			},
@@ -109,10 +112,7 @@ func TestAnnotationSet_Validate(t *testing.T) {
 							Code:       "MDC_ECG_HEART_RATE",
 							CodeSystem: "2.16.840.1.113883.6.24",
 						},
-						Value: &PhysicalQuantity{
-							Value: "not-a-number",
-							Unit:  "bpm",
-						},
+						Value: makePQValue("not-a-number", "bpm"),
 					},
 				},
 			},
@@ -135,10 +135,7 @@ func TestAnnotation_Validate(t *testing.T) {
 				Code:       "MDC_ECG_HEART_RATE",
 				CodeSystem: "2.16.840.1.113883.6.24",
 			},
-			Value: &PhysicalQuantity{
-				Value: "57",
-				Unit:  "bpm",
-			},
+			Value: makePQValue("57", "bpm"),
 		}
 
 		vctx := NewValidationContext(false)
@@ -153,10 +150,7 @@ func TestAnnotation_Validate(t *testing.T) {
 				CodeSystem:     "", // Empty for vendor codes
 				CodeSystemName: "MINDRAY",
 			},
-			Value: &PhysicalQuantity{
-				Value: "234",
-				Unit:  "ms",
-			},
+			Value: makePQValue("234", "ms"),
 		}
 
 		vctx := NewValidationContext(false)
@@ -176,10 +170,7 @@ func TestAnnotation_Validate(t *testing.T) {
 						Code: &Code[string, string]{
 							Code: "ECG_TIME_PD_QTcH",
 						},
-						Value: &PhysicalQuantity{
-							Value: "413",
-							Unit:  "ms",
-						},
+						Value: makePQValue("413", "ms"),
 					},
 				},
 			},
