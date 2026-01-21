@@ -1,7 +1,6 @@
 # HL7 aECG Library for Go
 
 [![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.20-blue.svg)](https://golang.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A comprehensive Go library for generating HL7 v3 Annotated Electrocardiogram (aECG) XML files compliant with the HL7 aECG Implementation Guide (Final 21-March-2005) for FDA clinical trial submissions.
 
@@ -22,7 +21,6 @@ A comprehensive Go library for generating HL7 v3 Annotated Electrocardiogram (aE
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -777,10 +775,6 @@ Contributions are welcome! Please follow these guidelines:
 - Additional series types (Holter, stress test)
 - XML parsing (unmarshalling from XML files)
 - Enhanced validation (cross-field consistency)
-
-## License
-
-[MIT License](LICENSE)
 
 ## Authors
 
