@@ -772,7 +772,7 @@ Contributions are welcome! Please follow these guidelines:
 
 - Related observations (medications, vital signs)
 - Derivation support for derived series
-- Additional series types (Holter, stress test)
+- Additional series types (Holter)
 - XML parsing (unmarshalling from XML files)
 - Enhanced validation (cross-field consistency)
 
