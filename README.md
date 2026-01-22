@@ -1,6 +1,7 @@
 # HL7 aECG Library for Go
 
 [![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.20-blue.svg)](https://golang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 A comprehensive Go library for generating HL7 v3 Annotated Electrocardiogram (aECG) XML files compliant with the HL7 aECG Implementation Guide (Final 21-March-2005) for FDA clinical trial submissions.
 
