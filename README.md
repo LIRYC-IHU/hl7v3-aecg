@@ -22,6 +22,10 @@ A comprehensive Go library for generating HL7 v3 Annotated Electrocardiogram (aE
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
+- [Authors](#authors)
+- [Funding](#funding)
+- [Acknowledgments](#acknowledgments)
+- [Support](#support)
 
 ## Features
 
@@ -780,6 +784,15 @@ Contributions are welcome! Please follow these guidelines:
 ## Authors
 
 - Jonathan Milhas - Initial work - LIRYC-IHU
+
+## Funding
+
+<p align="center">
+  <img src="assets/France_2030_2022_03_logotype_rouge_bleu.jpg" alt="France 2030" height="100" style="margin: 0 20px;">
+  <img src="assets/france-relance-europe.png" alt="France Relance - Europe" height="100" style="margin: 0 20px;">
+</p>
+
+This project has been funded by the French government as part of the France 2030 initiative and by the European Union - Next Generation EU as part of the France Relance plan.
 
 ## Acknowledgments
 
