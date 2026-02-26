@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"fmt"
 )
 
 func (c *Code[T, U]) ValidateCode(ctx context.Context, vctx *ValidationContext, key string) error {
@@ -20,7 +19,6 @@ func (c *Code[T, U]) ValidateCode(ctx context.Context, vctx *ValidationContext, 
 	case *Code[SeriesTypeCode, CodeSystemOID]:
 		return validateSeriesTypeCode(vctx, any(c).(*Code[SeriesTypeCode, CodeSystemOID]))
 	default:
-		fmt.Printf("No specific validation implemented for code type %T\n", c)
 		return nil
 	}
 }
