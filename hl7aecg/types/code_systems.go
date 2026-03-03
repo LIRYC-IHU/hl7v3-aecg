@@ -100,25 +100,28 @@ const (
 	MDC_ECG_WAVC_UWAVE   WaveformAnnotationCode = "MDC_ECG_WAVC_UWAVE"   // U wave
 
 	// Time Intervals (MDC codes used in annotationSet)
-	MDC_ECG_TIME_PD_QT  IntervalCode = "MDC_ECG_TIME_PD_QT"  // QT interval (ms)
-	MDC_ECG_TIME_PD_QTC IntervalCode = "MDC_ECG_TIME_PD_QTC" // QT interval corrected (ms)
-	MDC_ECG_TIME_PD_QTc IntervalCode = "MDC_ECG_TIME_PD_QTc" // QTc interval (ms) - lowercase variant
-	MDC_ECG_TIME_PD_RR  IntervalCode = "MDC_ECG_TIME_PD_RR"  // RR interval (ms)
-	MDC_ECG_TIME_PD_PP  IntervalCode = "MDC_ECG_TIME_PD_PP"  // PP interval (ms)
-	MDC_ECG_TIME_PD_PR  IntervalCode = "MDC_ECG_TIME_PD_PR"  // PR interval (ms)
-	MDC_ECG_TIME_PD_QRS IntervalCode = "MDC_ECG_TIME_PD_QRS" // QRS duration (ms)
+	MDC_ECG_TIME_PD_QT            IntervalCode = "MDC_ECG_TIME_PD_QT"  // QT interval (ms)
+	MDC_ECG_TIME_PD_QTC           IntervalCode = "MDC_ECG_TIME_PD_QTC" // QT interval corrected (ms)
+	MDC_ECG_TIME_PD_QTc           IntervalCode = "MDC_ECG_TIME_PD_QTc" // QTc interval (ms) - lowercase variant
+	MDC_ECG_TIME_PD_RR            IntervalCode = "MDC_ECG_TIME_PD_RR"  // RR interval (ms)
+	MDC_ECG_TIME_PD_PP            IntervalCode = "MDC_ECG_TIME_PD_PP"  // PP interval (ms)
+	MDC_ECG_TIME_PD_PR            IntervalCode = "MDC_ECG_TIME_PD_PR"  // PR interval (ms)
+	MDC_ECG_TIME_PD_QRS           IntervalCode = "MDC_ECG_TIME_PD_QRS" // QRS duration (ms)
+	MDC_ECG_TIME_PD_QT_DISPERSION IntervalCode = "MDC_ECG_TIME_PD_QT_DISPERSION"
 
 	// Measurements (MDC codes used in annotationSet)
-	MDC_ECG_HEART_RATE MeasurementCode = "MDC_ECG_HEART_RATE" // Heart rate (bpm)
-	MDC_ECG_AMPL_QRS   MeasurementCode = "MDC_ECG_AMPL_QRS"   // QRS amplitude (µV)
-	MDC_ECG_AMPL_P     MeasurementCode = "MDC_ECG_AMPL_P"     // P wave amplitude (µV)
-	MDC_ECG_AMPL_T     MeasurementCode = "MDC_ECG_AMPL_T"     // T wave amplitude (µV)
-	MDC_ECG_AMPL_ST    MeasurementCode = "MDC_ECG_AMPL_ST"    // ST segment amplitude (µV)
+	MDC_ECG_HEART_RATE        MeasurementCode = "MDC_ECG_HEART_RATE" // Heart rate (bpm)
+	MDC_ECG_AMPL_QRS          MeasurementCode = "MDC_ECG_AMPL_QRS"   // QRS amplitude (µV)
+	MDC_ECG_AMPL_P            MeasurementCode = "MDC_ECG_AMPL_P"     // P wave amplitude (µV)
+	MDC_ECG_AMPL_T            MeasurementCode = "MDC_ECG_AMPL_T"     // T wave amplitude (µV)
+	MDC_ECG_AMPL_ST           MeasurementCode = "MDC_ECG_AMPL_ST"    // ST segment amplitude (µV)
+	MDC_ECG_HEART_RATE_ATRIAL MeasurementCode = "MDC_ECG_HEART_RATE_ATRIAL"
 
 	// Axis Measurements
 	MDC_ECG_ANGLE_P_FRONT   AnnotationCode = "MDC_ECG_ANGLE_P_FRONT"   // P axis (degrees)
 	MDC_ECG_ANGLE_QRS_FRONT AnnotationCode = "MDC_ECG_ANGLE_QRS_FRONT" // QRS axis (degrees)
 	MDC_ECG_ANGLE_T_FRONT   AnnotationCode = "MDC_ECG_ANGLE_T_FRONT"   // T axis (degrees)
+	MDC_ECG_ANGLE_ST_FRONT  AnnotationCode = "MDC_ECG_ANGLE_ST_FRONT"
 )
 
 // =============================================================================
