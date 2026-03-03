@@ -1027,6 +1027,26 @@ func (as *AnnotationSet) AddQTcInterval(value float64) int {
 	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QTc), string(MDC_OID), value, "ms")
 }
 
+// AddRRInterval adds an RR interval annotation in milliseconds.
+func (as *AnnotationSet) AddRRInterval(value float64) int {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_RR), string(MDC_OID), value, "ms")
+}
+
+// AddAtrialRate adds an atrial rate annotation in beats per minute.
+func (as *AnnotationSet) AddAtrialRate(value float64) int {
+	return as.AddAnnotation(string(MDC_ECG_HEART_RATE_ATRIAL), string(MDC_OID), value, "bpm")
+}
+
+// AddQTDispersion adds a QT dispersion annotation in milliseconds.
+func (as *AnnotationSet) AddQTDispersion(value float64) int {
+	return as.AddAnnotation(string(MDC_ECG_TIME_PD_QT_DISPERSION), string(MDC_OID), value, "ms")
+}
+
+// AddSTAxis adds an ST frontal axis annotation in degrees.
+func (as *AnnotationSet) AddSTAxis(value float64) int {
+	return as.AddAnnotation(string(MDC_ECG_ANGLE_ST_FRONT), string(MDC_OID), value, "deg")
+}
+
 // formatFloat converts a float64 to a string for PhysicalQuantity.Value.
 // Removes trailing zeros and decimal point if not needed.
 func formatFloat(f float64) string {
