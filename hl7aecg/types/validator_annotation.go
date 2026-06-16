@@ -94,6 +94,14 @@ func (a *Annotation) Validate(ctx context.Context, vctx *ValidationContext) erro
 					"Annotation ST value cannot be empty",
 				))
 			}
+		} else if a.Value.IsED() {
+			// Encapsulated data validation
+			if text, ok := a.Value.GetED(); !ok || text == "" {
+				vctx.AddError(NewValidationError(
+					"annotation.value",
+					"Annotation ED value cannot be empty",
+				))
+			}
 		}
 	}
 

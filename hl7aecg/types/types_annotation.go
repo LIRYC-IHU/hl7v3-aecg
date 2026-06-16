@@ -273,6 +273,31 @@ type StringValue struct {
 	Value string `xml:",chardata"`
 }
 
+// EDValue represents an Encapsulated Data value (xsi:type="ED").
+//
+// Used for free-text observations carried in a value attribute rather than as
+// element character data (e.g. symptom or clinical-history text).
+//
+// XML Structure:
+//
+//	<value xsi:type="ED" value="rindu tout"/>
+//
+// Cardinality: Optional (within Annotation)
+// XML Attribute: xsi:type="ED"
+type EDValue struct {
+	// XsiType specifies the type as "ED" for Encapsulated Data.
+	//
+	// XML Tag: xsi:type="ED"
+	// Cardinality: Required
+	XsiType string `xml:"xsi:type,attr"`
+
+	// Value is the encapsulated text, carried as a value attribute.
+	//
+	// XML Tag: value="..."
+	// Cardinality: Required
+	Value string `xml:"value,attr"`
+}
+
 // AnnotationValue represents a polymorphic value that can be either a PhysicalQuantity or StringValue.
 //
 // This type handles the xsi:type discrimination for annotation values.
@@ -342,6 +367,17 @@ func (av *AnnotationValue) UnmarshalXML(d *xml.Decoder, start xml.StartElement) 
 		av.Typed = st
 		return nil
 
+	case "ED":
+		// For Encapsulated Data, the text is carried in a value attribute.
+		ed := &EDValue{XsiType: "ED"}
+		for _, attr := range start.Attr {
+			if attr.Name.Local == "value" {
+				ed.Value = attr.Value
+			}
+		}
+		av.Typed = ed
+		return d.Skip()
+
 	default:
 		// Unknown type - skip the element
 		return d.Skip()
@@ -381,6 +417,16 @@ func (av *AnnotationValue) MarshalXML(e *xml.Encoder, start xml.StartElement) er
 	case *StringValue:
 		// For ST, encode as character data
 		return e.EncodeElement(typed.Value, start)
+
+	case *EDValue:
+		// For ED, the text is encoded as a value attribute.
+		if typed.Value != "" {
+			start.Attr = append(start.Attr, xml.Attr{
+				Name:  xml.Name{Local: "value"},
+				Value: typed.Value,
+			})
+		}
+		return e.EncodeElement("", start)
 
 	default:
 		// If no typed value, encode empty element
@@ -424,6 +470,21 @@ func (av *AnnotationValue) IsPQ() bool {
 // IsST returns true if this annotation value is a StringValue.
 func (av *AnnotationValue) IsST() bool {
 	_, ok := av.Typed.(*StringValue)
+	return ok
+}
+
+// GetED returns the encapsulated text if this is an EDValue.
+// Returns (text, true) if successful, ("", false) otherwise.
+func (av *AnnotationValue) GetED() (string, bool) {
+	if ed, ok := av.Typed.(*EDValue); ok {
+		return ed.Value, true
+	}
+	return "", false
+}
+
+// IsED returns true if this annotation value is an EDValue.
+func (av *AnnotationValue) IsED() bool {
+	_, ok := av.Typed.(*EDValue)
 	return ok
 }
 
@@ -823,6 +884,55 @@ func (as *AnnotationSet) AddTextAnnotation(code, codeSystem, text string) int {
 			Typed: &StringValue{
 				XsiType: "ST",
 				Value:   text,
+			},
+		}
+	}
+
+	as.Component = append(as.Component, AnnotationComponent{Annotation: ann})
+	return len(as.Component) - 1
+}
+
+// AddEDAnnotation adds an annotation whose value is Encapsulated Data (ED).
+//
+// Unlike AddTextAnnotation (which emits xsi:type="ST" with character data),
+// this emits xsi:type="ED" with the text carried in a value attribute:
+//
+//	<value xsi:type="ED" value="..."/>
+//
+// Parameters:
+//   - code: The annotation code
+//   - codeSystem: The code system OID
+//   - value: The encapsulated text content
+//
+// Returns:
+//   - int: Index of the newly created annotation
+func (as *AnnotationSet) AddEDAnnotation(code, codeSystem, value string) int {
+	if as == nil {
+		return -1
+	}
+
+	// Input validation
+	if code == "" {
+		return -1
+	}
+	if codeSystem == "" {
+		return -1
+	}
+
+	ann := Annotation{
+		Code: &Code[string, string]{
+			Code:       code,
+			CodeSystem: codeSystem,
+		},
+	}
+
+	// Only add Value if text is not empty (allows container annotations)
+	if value != "" {
+		ann.Value = &AnnotationValue{
+			XsiType: "ED",
+			Typed: &EDValue{
+				XsiType: "ED",
+				Value:   value,
 			},
 		}
 	}
