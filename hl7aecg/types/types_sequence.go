@@ -278,10 +278,12 @@ type HeadTimestamp struct {
 	// Cardinality: Required
 	Value string `xml:"value,attr"`
 
-	// Unit is the unit of time (typically "s" for seconds).
+	// Unit is retained for documents that carry one, but this package does not
+	// write it: a TS is an instant, not a measured quantity, and the FDA aECG
+	// Implementation Guide writes the head as <head value="…"/>.
 	//
 	// XML Tag: unit="..."
-	// Cardinality: Optional (defaults to "s")
+	// Cardinality: Optional
 	Unit string `xml:"unit,attr,omitempty"`
 }
 

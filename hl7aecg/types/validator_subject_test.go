@@ -122,9 +122,9 @@ func TestTrialSubject_Validate(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name          string
-		trialSubject  TrialSubject
-		wantError     *ValidationError
+		name         string
+		trialSubject TrialSubject
+		wantError    *ValidationError
 	}{
 		{
 			name: "Valid with ID only",
@@ -241,8 +241,8 @@ func TestSubjectDemographicPerson_Validate(t *testing.T) {
 			wantError: ErrRaceCode,
 		},
 		{
-			name: "Empty is valid (all optional)",
-			person: SubjectDemographicPerson{},
+			name:      "Empty is valid (all optional)",
+			person:    SubjectDemographicPerson{},
 			wantError: nil,
 		},
 	}

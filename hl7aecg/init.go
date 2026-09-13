@@ -5,7 +5,6 @@ import (
 	stdxml "encoding/xml"
 	"os"
 
-	"github.com/ECUST-XX/xml"
 	"github.com/LIRYC-IHU/hl7v3-aecg/hl7aecg/types"
 )
 
@@ -44,8 +43,23 @@ func (h *Hl7xml) Initialize(code types.CPT_CODE, codeSystem types.CodeSystemOID,
 	return h
 }
 
+// String renders the document as XML.
+//
+// It marshals with encoding/xml, and must keep doing so: several types in this
+// package carry custom MarshalXML methods that the document depends on for
+// correctness. SequenceCode flattens <code><Lead code="…"/></code> into the
+// <code code="…"/> form the FDA aECG Implementation Guide specifies, and
+// SequenceValue writes the typed <value> body — the origin, scale and digits of
+// every waveform.
+//
+// This previously used a third-party marshaller for its short-form empty tags.
+// That marshaller does not invoke those methods, so String() emitted lead codes
+// in a nested form this package's own UnmarshalXML cannot read, and dropped the
+// contents of every <value> element: a document that round-tripped to zero
+// leads and no waveform data. Short-form empty tags are cosmetic; reading back
+// what you wrote is not.
 func (h *Hl7xml) String() (string, error) {
-	data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
+	data, err := stdxml.MarshalIndent(h.HL7AEcg, "", "  ")
 	if err != nil {
 		return "", err
 	}
@@ -55,11 +69,7 @@ func (h *Hl7xml) String() (string, error) {
 func (h *Hl7xml) Test() (*Hl7xml, error) {
 	dir := "/tmp/hl7aecg_example.xml"
 
-	// DEBUG: Try standard Go XML marshalling to see if MarshalXML is called
-	// Use standard encoding/xml package instead of github.com/ECUST-XX/xml
 	data, err := stdxml.MarshalIndent(h.HL7AEcg, "", "  ")
-
-	//data, err := xml.MarshalIndentShortForm(h.HL7AEcg, "", "  ")
 	if err != nil {
 		return h, err
 	}
