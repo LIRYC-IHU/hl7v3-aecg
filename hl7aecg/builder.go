@@ -280,9 +280,14 @@ func (h *Hl7xml) buildSeries(
 			Value: &types.SequenceValue{
 				XsiType: "GLIST_TS",
 				Typed: &types.GLIST_TS{
+					// No unit on the head. It is an HL7 TS — a point in time,
+					// not a measured quantity — and the FDA aECG
+					// Implementation Guide writes it as <head value="…"/>.
+					// The increment below is a different thing and does carry
+					// one. (GLIST_PQ's head is a PhysicalQuantity and keeps
+					// its unit; only the timestamp form is affected.)
 					Head: types.HeadTimestamp{
 						Value: startTime,
-						Unit:  "s",
 					},
 					Increment: types.Increment{
 						Value: formatFloat(increment),
@@ -565,7 +570,6 @@ func (h *Hl7xml) AddNotchFilter(notchFreq, unit string) *Hl7xml {
 func (h *Hl7xml) AddAgeObservation(age, unit string) *Hl7xml {
 	return h.AddControlVariable(types.NewAgeObservation(age, unit))
 }
-
 
 // =============================================================================
 // Add Confidentiality Code

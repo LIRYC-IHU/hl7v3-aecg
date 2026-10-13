@@ -2,10 +2,7 @@ module github.com/LIRYC-IHU/hl7v3-aecg
 
 go 1.25.1
 
-require (
-	github.com/ECUST-XX/xml v1.20.2
-	github.com/stretchr/testify v1.11.1
-)
+require github.com/stretchr/testify v1.11.1
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

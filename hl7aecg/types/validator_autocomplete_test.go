@@ -13,10 +13,10 @@ func TestID_Validate_Autocomplete(t *testing.T) {
 	aecg.SetRootID("755.3045256.2025923.103550", "")
 
 	tests := []struct {
-		name          string
-		id            ID
-		wantRoot      string
-		wantError     bool
+		name           string
+		id             ID
+		wantRoot       string
+		wantError      bool
 		setupSingleton bool
 	}{
 		{
@@ -25,8 +25,8 @@ func TestID_Validate_Autocomplete(t *testing.T) {
 				Root:      "",
 				Extension: "test",
 			},
-			wantRoot:      "755.3045256.2025923.103550",
-			wantError:     false,
+			wantRoot:       "755.3045256.2025923.103550",
+			wantError:      false,
 			setupSingleton: true,
 		},
 		{
@@ -35,8 +35,8 @@ func TestID_Validate_Autocomplete(t *testing.T) {
 				Root:      "",
 				Extension: "test",
 			},
-			wantRoot:      "",
-			wantError:     true,
+			wantRoot:       "",
+			wantError:      true,
 			setupSingleton: false,
 		},
 		{
@@ -45,8 +45,8 @@ func TestID_Validate_Autocomplete(t *testing.T) {
 				Root:      "2.16.840.1.113883.3.1234",
 				Extension: "test",
 			},
-			wantRoot:      "2.16.840.1.113883.3.1234",
-			wantError:     false,
+			wantRoot:       "2.16.840.1.113883.3.1234",
+			wantError:      false,
 			setupSingleton: true,
 		},
 	}

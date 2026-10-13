@@ -389,11 +389,11 @@ func TestGLIST_TS_XMLMarshal(t *testing.T) {
 // TestSequenceValue_UnmarshalXML tests polymorphic unmarshaling of SequenceValue
 func TestSequenceValue_UnmarshalXML(t *testing.T) {
 	tests := []struct {
-		name        string
-		xmlData     string
-		wantType    string
-		wantErr     bool
-		validateFn  func(*testing.T, *SequenceValue) // Custom validation function
+		name       string
+		xmlData    string
+		wantType   string
+		wantErr    bool
+		validateFn func(*testing.T, *SequenceValue) // Custom validation function
 	}{
 		{
 			name:     "Unmarshal GLIST_TS",
